@@ -12,34 +12,20 @@ import { SignalsPanel } from "@/components/signals-panel";
 import { CalendarPanel } from "@/components/calendar-panel";
 import { SentimentGauge } from "@/components/sentiment-gauge";
 import { MiniChartCard } from "@/components/mini-chart-card";
+import { TradersPanel } from "@/components/traders-panel";
+import { MultiTfPanel } from "@/components/multi-tf-panel";
+import { LiveAlertsWidget } from "@/components/live-alerts-widget";
 import { DailyBrief, MarketIndicators, NewsItem, TradingSignal, CalendarEvent } from "@/lib/market";
+import { TopTrader, MultiTfSignal } from "@/lib/mt5";
 
-type ViewKey = "dashboard" | "news" | "indicators" | "signals" | "calendar";
+type ViewKey = "dashboard" | "news" | "indicators" | "signals" | "traders" | "multiTf" | "calendar";
 
-interface BriefResponse {
-  brief: DailyBrief;
-  news: NewsItem[];
-  generatedAt: string;
-  cached: boolean;
-}
-
-interface IndicatorsResponse {
-  indicators: MarketIndicators;
-  generatedAt: string;
-  cached: boolean;
-}
-
-interface SignalsResponse {
-  signals: TradingSignal[];
-  generatedAt: string;
-  cached: boolean;
-}
-
-interface CalendarResponse {
-  events: CalendarEvent[];
-  generatedAt: string;
-  cached: boolean;
-}
+interface BriefResponse { brief: DailyBrief; news: NewsItem[]; generatedAt: string; cached: boolean; }
+interface IndicatorsResponse { indicators: MarketIndicators; generatedAt: string; cached: boolean; }
+interface SignalsResponse { signals: TradingSignal[]; generatedAt: string; cached: boolean; }
+interface CalendarResponse { events: CalendarEvent[]; generatedAt: string; cached: boolean; }
+interface TradersResponse { traders: TopTrader[]; generatedAt: string; cached: boolean; }
+interface MultiTfResponse { signals: MultiTfSignal[]; generatedAt: string; cached: boolean; }
 
 function Dashboard() {
   const { t, lang } = useApp();
@@ -50,16 +36,22 @@ function Dashboard() {
   const [indicators, setIndicators] = useState<MarketIndicators | null>(null);
   const [signals, setSignals] = useState<TradingSignal[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [traders, setTraders] = useState<TopTrader[]>([]);
+  const [multiTf, setMultiTf] = useState<MultiTfSignal[]>([]);
 
   const [briefLoading, setBriefLoading] = useState(false);
   const [indLoading, setIndLoading] = useState(false);
   const [sigLoading, setSigLoading] = useState(false);
   const [calLoading, setCalLoading] = useState(false);
+  const [tradersLoading, setTradersLoading] = useState(false);
+  const [multiTfLoading, setMultiTfLoading] = useState(false);
 
   const [briefMeta, setBriefMeta] = useState<{ cached?: boolean; generatedAt?: string }>({});
   const [indMeta, setIndMeta] = useState<{ cached?: boolean; generatedAt?: string }>({});
   const [sigMeta, setSigMeta] = useState<{ cached?: boolean; generatedAt?: string }>({});
   const [calMeta, setCalMeta] = useState<{ cached?: boolean; generatedAt?: string }>({});
+  const [tradersMeta, setTradersMeta] = useState<{ cached?: boolean; generatedAt?: string }>({});
+  const [multiTfMeta, setMultiTfMeta] = useState<{ cached?: boolean; generatedAt?: string }>({});
 
   const sectionRef = useRef<HTMLDivElement>(null);
 
@@ -71,11 +63,8 @@ function Dashboard() {
       setBrief(d.brief);
       setNews(d.news);
       setBriefMeta({ cached: d.cached, generatedAt: d.generatedAt });
-    } catch (e) {
-      console.error("fetchBrief", e);
-    } finally {
-      setBriefLoading(false);
-    }
+    } catch (e) { console.error("fetchBrief", e); }
+    finally { setBriefLoading(false); }
   }, []);
 
   const fetchIndicators = useCallback(async (force = false) => {
@@ -85,11 +74,8 @@ function Dashboard() {
       const d: IndicatorsResponse = await r.json();
       setIndicators(d.indicators);
       setIndMeta({ cached: d.cached, generatedAt: d.generatedAt });
-    } catch (e) {
-      console.error("fetchIndicators", e);
-    } finally {
-      setIndLoading(false);
-    }
+    } catch (e) { console.error("fetchIndicators", e); }
+    finally { setIndLoading(false); }
   }, []);
 
   const fetchSignals = useCallback(async (force = false) => {
@@ -99,11 +85,8 @@ function Dashboard() {
       const d: SignalsResponse = await r.json();
       setSignals(d.signals);
       setSigMeta({ cached: d.cached, generatedAt: d.generatedAt });
-    } catch (e) {
-      console.error("fetchSignals", e);
-    } finally {
-      setSigLoading(false);
-    }
+    } catch (e) { console.error("fetchSignals", e); }
+    finally { setSigLoading(false); }
   }, []);
 
   const fetchCalendar = useCallback(async (force = false) => {
@@ -113,25 +96,43 @@ function Dashboard() {
       const d: CalendarResponse = await r.json();
       setEvents(d.events);
       setCalMeta({ cached: d.cached, generatedAt: d.generatedAt });
-    } catch (e) {
-      console.error("fetchCalendar", e);
-    } finally {
-      setCalLoading(false);
-    }
+    } catch (e) { console.error("fetchCalendar", e); }
+    finally { setCalLoading(false); }
+  }, []);
+
+  const fetchTraders = useCallback(async (force = false) => {
+    setTradersLoading(true);
+    try {
+      const r = await fetch(`/api/traders${force ? "?force=1" : ""}`);
+      const d: TradersResponse = await r.json();
+      setTraders(d.traders);
+      setTradersMeta({ cached: d.cached, generatedAt: d.generatedAt });
+    } catch (e) { console.error("fetchTraders", e); }
+    finally { setTradersLoading(false); }
+  }, []);
+
+  const fetchMultiTf = useCallback(async (force = false) => {
+    setMultiTfLoading(true);
+    try {
+      const r = await fetch(`/api/multi-tf-signals${force ? "?force=1" : ""}`);
+      const d: MultiTfResponse = await r.json();
+      setMultiTf(d.signals);
+      setMultiTfMeta({ cached: d.cached, generatedAt: d.generatedAt });
+    } catch (e) { console.error("fetchMultiTf", e); }
+    finally { setMultiTfLoading(false); }
   }, []);
 
   useEffect(() => {
     fetchBrief();
     fetchIndicators();
     fetchCalendar();
-    // Signals depend on brief + indicators, give them a head start
+    fetchTraders();
+    fetchMultiTf();
     const t = setTimeout(() => fetchSignals(), 1500);
     return () => clearTimeout(t);
-  }, [fetchBrief, fetchIndicators, fetchCalendar, fetchSignals]);
+  }, [fetchBrief, fetchIndicators, fetchCalendar, fetchTraders, fetchMultiTf, fetchSignals]);
 
-  const scrollToContent = () => {
-    sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+  const scrollToContent = () => sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -159,6 +160,18 @@ function Dashboard() {
               />
             </div>
 
+            {/* Live alerts widget (top-priority) */}
+            <LiveAlertsWidget threshold={75} pollIntervalMs={45000} />
+
+            {/* Multi-timeframe signals (the user's main feature) */}
+            <MultiTfPanel
+              signals={multiTf}
+              loading={multiTfLoading}
+              cached={multiTfMeta.cached}
+              generatedAt={multiTfMeta.generatedAt}
+              onRefresh={() => fetchMultiTf(true)}
+            />
+
             {/* Indicators panel */}
             <IndicatorsPanel
               data={indicators}
@@ -170,26 +183,9 @@ function Dashboard() {
 
             {/* Mini charts */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <MiniChartCard
-                title={t.indicators.goldPrice}
-                description={t.indicators.goldPriceDesc}
-                data={[]}
-                unit="$"
-                color="#f59e0b"
-              />
-              <MiniChartCard
-                title={t.indicators.dxy}
-                description={t.indicators.dxyDesc}
-                data={[]}
-                color="#10b981"
-              />
-              <MiniChartCard
-                title={t.indicators.treasury10y}
-                description={t.indicators.treasury10yDesc}
-                data={[]}
-                unit="%"
-                color="#8b5cf6"
-              />
+              <MiniChartCard title={t.indicators.goldPrice} description={t.indicators.goldPriceDesc} data={[]} unit="$" color="#f59e0b" />
+              <MiniChartCard title={t.indicators.dxy} description={t.indicators.dxyDesc} data={[]} color="#10b981" />
+              <MiniChartCard title={t.indicators.treasury10y} description={t.indicators.treasury10yDesc} data={[]} unit="%" color="#8b5cf6" />
             </div>
 
             {/* Signals + Calendar */}
@@ -210,6 +206,15 @@ function Dashboard() {
               />
             </div>
 
+            {/* Top traders */}
+            <TradersPanel
+              traders={traders}
+              loading={tradersLoading}
+              cached={tradersMeta.cached}
+              generatedAt={tradersMeta.generatedAt}
+              onRefresh={() => fetchTraders(true)}
+            />
+
             {/* News */}
             <NewsPanel
               news={news}
@@ -224,71 +229,45 @@ function Dashboard() {
 
       {view === "news" && (
         <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-          <NewsPanel
-            news={news}
-            loading={briefLoading}
-            cached={briefMeta.cached}
-            generatedAt={briefMeta.generatedAt}
-            onRefresh={() => fetchBrief(true)}
-          />
+          <NewsPanel news={news} loading={briefLoading} cached={briefMeta.cached} generatedAt={briefMeta.generatedAt} onRefresh={() => fetchBrief(true)} />
         </main>
       )}
 
       {view === "indicators" && (
         <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6">
-          <IndicatorsPanel
-            data={indicators}
-            loading={indLoading}
-            cached={indMeta.cached}
-            generatedAt={indMeta.generatedAt}
-            onRefresh={() => fetchIndicators(true)}
-          />
+          <IndicatorsPanel data={indicators} loading={indLoading} cached={indMeta.cached} generatedAt={indMeta.generatedAt} onRefresh={() => fetchIndicators(true)} />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <MiniChartCard
-              title={t.indicators.goldPrice}
-              description={t.indicators.goldPriceDesc}
-              data={[]}
-              unit="$"
-              color="#f59e0b"
-            />
-            <MiniChartCard
-              title={t.indicators.dxy}
-              description={t.indicators.dxyDesc}
-              data={[]}
-              color="#10b981"
-            />
-            <MiniChartCard
-              title={t.indicators.treasury10y}
-              description={t.indicators.treasury10yDesc}
-              data={[]}
-              unit="%"
-              color="#8b5cf6"
-            />
+            <MiniChartCard title={t.indicators.goldPrice} description={t.indicators.goldPriceDesc} data={[]} unit="$" color="#f59e0b" />
+            <MiniChartCard title={t.indicators.dxy} description={t.indicators.dxyDesc} data={[]} color="#10b981" />
+            <MiniChartCard title={t.indicators.treasury10y} description={t.indicators.treasury10yDesc} data={[]} unit="%" color="#8b5cf6" />
           </div>
         </main>
       )}
 
       {view === "signals" && (
+        <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6">
+          <LiveAlertsWidget threshold={75} pollIntervalMs={45000} />
+          <MultiTfPanel signals={multiTf} loading={multiTfLoading} cached={multiTfMeta.cached} generatedAt={multiTfMeta.generatedAt} onRefresh={() => fetchMultiTf(true)} />
+          <SignalsPanel signals={signals} loading={sigLoading} cached={sigMeta.cached} generatedAt={sigMeta.generatedAt} onRefresh={() => fetchSignals(true)} />
+        </main>
+      )}
+
+      {view === "traders" && (
         <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-          <SignalsPanel
-            signals={signals}
-            loading={sigLoading}
-            cached={sigMeta.cached}
-            generatedAt={sigMeta.generatedAt}
-            onRefresh={() => fetchSignals(true)}
-          />
+          <TradersPanel traders={traders} loading={tradersLoading} cached={tradersMeta.cached} generatedAt={tradersMeta.generatedAt} onRefresh={() => fetchTraders(true)} />
+        </main>
+      )}
+
+      {view === "multiTf" && (
+        <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6">
+          <LiveAlertsWidget threshold={75} pollIntervalMs={45000} />
+          <MultiTfPanel signals={multiTf} loading={multiTfLoading} cached={multiTfMeta.cached} generatedAt={multiTfMeta.generatedAt} onRefresh={() => fetchMultiTf(true)} />
         </main>
       )}
 
       {view === "calendar" && (
         <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-          <CalendarPanel
-            events={events}
-            loading={calLoading}
-            cached={calMeta.cached}
-            generatedAt={calMeta.generatedAt}
-            onRefresh={() => fetchCalendar(true)}
-          />
+          <CalendarPanel events={events} loading={calLoading} cached={calMeta.cached} generatedAt={calMeta.generatedAt} onRefresh={() => fetchCalendar(true)} />
         </main>
       )}
 

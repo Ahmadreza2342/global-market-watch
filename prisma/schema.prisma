@@ -26,7 +26,7 @@ model User {
 model AnalysisCache {
   id        String   @id @default(cuid())
   date      String   // YYYY-MM-DD
-  type      String   // 'daily_brief' | 'fed_news' | 'war_news' | 'indicators' | 'signals' | 'calendar'
+  type      String   // 'daily_brief' | 'fed_news' | 'war_news' | 'indicators' | 'signals' | 'calendar' | 'traders' | 'multi_tf_signals'
   payload   String   // JSON string
   createdAt DateTime @default(now())
 
@@ -37,8 +37,8 @@ model AnalysisCache {
 model Alert {
   id        String   @id @default(cuid())
   userId    String
-  symbol    String   // e.g. XAU/USD, DXY, US10Y
-  condition String   // 'above' | 'below' | 'change_pct'
+  symbol    String   // e.g. XAU/USD, WTI/USD, DXY, US10Y
+  condition String   // 'above' | 'below' | 'change_pct' | 'strong_signal'
   threshold String
   note      String?
   active    Boolean  @default(true)
@@ -51,12 +51,30 @@ model Alert {
   @@index([userId, active])
 }
 
+// History of triggered live alerts (server-side, system-generated)
+model SignalHistory {
+  id        String   @id @default(cuid())
+  symbol    String   // XAU/USD, WTI/USD
+  timeframe String   // 15m, 1h, daily
+  direction String   // long, short, neutral
+  strength  Int      // 0-100
+  entry     String?
+  takeProfit String?
+  stopLoss  String?
+  source    String   // 'technical' | 'news' | 'traders' | 'composite'
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([symbol, timeframe, createdAt])
+  @@index([createdAt])
+}
+
 model Bookmark {
   id        String   @id @default(cuid())
   userId    String
   title     String
   url       String?
-  category  String   // 'news' | 'indicator' | 'signal'
+  category  String   // 'news' | 'indicator' | 'signal' | 'trader'
   note      String?
   createdAt DateTime @default(now())
 

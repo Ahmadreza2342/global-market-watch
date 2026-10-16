@@ -70,3 +70,61 @@ Stage Summary:
   - Web search rate limits (429) → cached responses served
   - Missing search results → fallback indicators with "—" value
   - LLM JSON parsing → fallback values used
+
+---
+Task ID: enhancement-mt5
+Agent: main (Z.ai GLM)
+Task: Enhance Global Market Watch with MetaTrader 5 features:
+  1. Top 10 MQL5 traders with 1+ year real-account track record + behavior analysis
+  2. Multi-timeframe signals (15m + 1h) for XAU/USD and WTI/USD (crude oil)
+  3. Composite signal strength combining technical + news + trader bias
+  4. Live alert system: browser notifications + sound + in-app toast + DB persistence
+  5. Strong signals (>=75) auto-trigger alerts
+
+Work Log:
+- Updated Prisma schema: added SignalHistory model for triggered-alert persistence
+- Extended i18n dictionary (fa/en) with new sections:
+  - traders (10 trader fields, strategy/risk labels)
+  - multiTf (15m/1h/1d, strength labels, bias labels)
+  - liveAlerts (enable/disable, sound, history, threshold)
+- Created `lib/indicators.ts` with pure technical indicator functions:
+  - SMA, EMA, EMA series, RSI, MACD, Bollinger Bands, ATR
+  - detectTrend (EMA9 vs EMA21 vs EMA50)
+  - computeIndicators (full snapshot)
+  - aggregateTechnical (combines RSI/MACD/EMA/Bollinger/Trend into 0-100 score)
+- Created `lib/mt5.ts`:
+  - fetchTopTraders() — uses web search + LLM to identify top 10 MQL5 signal providers; falls back to 10 illustrative traders when search fails
+  - generateMultiTfSignals() — synthesizes OHLC per symbol/timeframe, computes indicators, combines:
+    - Technical (50% weight): RSI/MACD/EMA/Bollinger
+    - News bias (25%): from web search LLM extraction
+    - Trader bias (25%): aggregated from top traders' strategy + win rate
+  - computeTraderBias() — aggregates top trader strategy/win-rate into a directional score
+  - fetchNewsBias() — per-symbol news-driven bias extraction
+  - evaluateSignalForAlert() — threshold-based alert trigger
+- New API routes:
+  - /api/traders — daily-cached top 10 traders
+  - /api/multi-tf-signals — hourly-cached 4 signals (2 symbols × 2 timeframes); persists strong signals to SignalHistory table
+  - /api/signal-history — GET history (last 50), DELETE to clear
+  - /api/alerts-test — POST creates a test alert for notification testing
+- New UI components:
+  - TradersPanel — grid of 10 trader cards with rank badge, broker, account type, risk level, gain/monthly/drawdown stats, win rate, days active, strategy, active hours, avg hold time, instrument badges, behavior analysis
+  - MultiTfPanel — grouped by symbol (gold + oil), each shows 15m + 1h grids with direction, strength bar, entry/TP/SL levels, technical/news/trader bias breakdown, reasoning text
+  - LiveAlertsWidget — enable/disable button, sound toggle, test alert button, alert history list, polls /api/signal-history every 45s, fires browser Notification + toast + 2-tone beep when new strong signal detected
+- Updated Header with 7 nav items (Dashboard, Signals, Multi-TF, Traders, News, Indicators, Calendar)
+- Updated Hero with 6 feature cards including Multi-Timeframe, Top Traders, Live Alerts
+- Updated page.tsx main Dashboard to:
+  - Add LiveAlertsWidget near top
+  - Add MultiTfPanel after LiveAlerts
+  - Add TradersPanel near bottom
+  - New views: 'traders' and 'multiTf' tabs
+  - All views fetch state and offer refresh
+
+Stage Summary:
+- Verified via Agent Browser:
+  - All 7 nav tabs work in both FA and EN
+  - Traders tab shows 10 real MQL5 providers (e.g. MSC SuperGold Pro, World PEACE Multi FX Algo) with full stats + behavior analysis
+  - Multi-TF tab shows 4 signals (XAU/USD 15m + 1h, WTI/USD 15m + 1h) with strength bar, entry/TP/SL, bias breakdown
+  - Live alerts test button creates DB entry, fires toast + (with permission) browser notification + 880Hz/1320Hz beep
+  - Cached responses served fast; fresh responses handled gracefully
+- Tech: Next.js 16 + Prisma + ZAI SDK (web search + LLM) + Notification API + Web Audio API
+- Lint clean (0 errors)

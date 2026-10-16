@@ -13,10 +13,12 @@ export function Hero({ onStart }: HeroProps) {
   const Arrow = lang === "fa" ? ArrowLeft : ArrowRight;
 
   const features = [
-    { icon: Globe, title: lang === "fa" ? "اخبار روزانه" : "Daily News", desc: lang === "fa" ? "تحلیل هوش مصنوعی از اخبار فدرال، جنگ، بحران و سیاست" : "AI-powered analysis of Fed, war, crisis & political news" },
+    { icon: Globe, title: lang === "fa" ? "اخبار روزانه" : "Daily News", desc: lang === "fa" ? "تحلیل هوش مصنوعی از اخبار فدرال، جنگ، بحران و سیاست" : "AI analysis of Fed, war, crisis & political news" },
     { icon: Activity, title: lang === "fa" ? "شاخص‌های کلیدی" : "Key Indicators", desc: lang === "fa" ? "نرخ بهره، شاخص دلار، تورم، بازده اوراق ۱۰ساله" : "Fed rate, DXY, inflation, 10Y yield" },
-    { icon: Target, title: lang === "fa" ? "نقاط ورود/خروج" : "Entry/Exit Points", desc: lang === "fa" ? "سیگنال‌های هوشمند برای XAU/USD با حد سود/ضرر" : "Smart signals for XAU/USD with TP/SL" },
-    { icon: LineChart, title: lang === "fa" ? "تقویم اقتصادی" : "Economic Calendar", desc: lang === "fa" ? "رویدادهای هفته آینده آمریکا" : "Upcoming US events this week" },
+    { icon: Target, title: lang === "fa" ? "چند تایم‌فریم" : "Multi-Timeframe", desc: lang === "fa" ? "سیگنال ۱۵ دقیقه و ۱ ساعته برای طلا و نفت" : "15m & 1h signals for gold and crude oil" },
+    { icon: LineChart, title: lang === "fa" ? "تریدرهای برتر" : "Top Traders", desc: lang === "fa" ? "۱۰ تریدر برتر MQL5 با اکانت واقعی و ۱+ سال فعالیت" : "Top 10 MQL5 traders with real accounts, 1+ year" },
+    { icon: Activity, title: lang === "fa" ? "هشدار زنده" : "Live Alerts", desc: lang === "fa" ? "نوتیفیکیشن مرورگر + صدا برای سیگنال‌های قوی" : "Browser notifications + sound for strong signals" },
+    { icon: Target, title: lang === "fa" ? "نقاط ورود/خروج" : "Entry/Exit Points", desc: lang === "fa" ? "نقاط هوشمند ورود با حد سود/ضرر" : "Smart entry points with TP/SL" },
   ];
 
   return (
@@ -48,7 +50,7 @@ export function Hero({ onStart }: HeroProps) {
           </div>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
+        <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
           {features.map((f, i) => (
             <div key={i} className="rounded-xl border border-border bg-card/50 backdrop-blur p-4 hover:border-amber-500/40 transition-colors">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-rose-600 text-white mb-3">

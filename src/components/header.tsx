@@ -23,9 +23,11 @@ export function Header({ active, onNavigate }: HeaderProps) {
 
   const navItems = [
     { key: "dashboard", label: t.nav.dashboard },
+    { key: "signals", label: t.nav.signals },
+    { key: "multiTf", label: t.nav.multiTf },
+    { key: "traders", label: t.nav.traders },
     { key: "news", label: t.nav.news },
     { key: "indicators", label: t.nav.indicators },
-    { key: "signals", label: t.nav.signals },
     { key: "calendar", label: t.nav.calendar },
   ];
 
