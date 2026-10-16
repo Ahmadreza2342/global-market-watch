@@ -4,6 +4,21 @@
 
 A bilingual (Persian/English) web application for daily analysis of world news, economic indicators, multi-timeframe trading signals, and live alerts with Telegram delivery.
 
+## 🚀 نصب آنلاین (یک کلیک) | One-Click Deploy
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git?s=https%3A%2F%2Fgithub.com%2FAhmadreza2342%2Fglobal-market-watch)
+
+روی دکمه بالا بزن → با حساب GitHub وارد شو → **Deploy** بزن. تمام!
+
+**تنظیمات لازم هنگام Deploy:**
+در بخش **Environment Variables** (در همون صفحه‌ی Import) این متغیر رو اضافه کن:
+
+| Key | Value | Environments |
+|-----|-------|--------------|
+| `DATABASE_URL` | `file:/tmp/custom.db` | Production, Preview, Development |
+
+⚠️ **اگر پیدا نکردی مهم نیست** — بذار Default بمونه، بعداً از Settings اضافه کن.
+
 ## 📱 نصب در گوشی | Install on Phone
 
 این اپ به‌صورت **PWA** (Progressive Web App) ساخته شده و می‌تونی اون رو در گوشی خودت نصب کنی مثل یک اپ بومی.
