@@ -4,6 +4,48 @@
 
 A bilingual (Persian/English) web application for daily analysis of world news, economic indicators, multi-timeframe trading signals, and live alerts with Telegram delivery.
 
+## 📱 نصب در گوشی | Install on Phone
+
+این اپ به‌صورت **PWA** (Progressive Web App) ساخته شده و می‌تونی اون رو در گوشی خودت نصب کنی مثل یک اپ بومی.
+
+### روش ۱: دانلود فایل تک‌فایلی (آفلاین) | Method 1: Single-file Offline
+
+اگه می‌خوای بدون سرور ازش استفاده کنی، می‌تونی فایل `standalone.html` رو از این ریپو دانلود کنی:
+
+1. فایل `public/standalone.html` رو از [این لینک](./public/standalone.html) دانلود کن
+2. فایل رو در گوشی خودت باز کن (با مرورگر Chrome یا Safari)
+3. مراحل Add to Home Screen رو دنبال کن
+
+> ⚠️ **نکته**: نسخه standalone از داده‌های نمونه‌شده استفاده می‌کنه و به‌صورت آفلاین کار می‌کنه. برای دریافت سیگنال‌های زنده، باید از نسخه کامل deployed شده استفاده کنی.
+
+### روش ۲: نسخه کامل Deploy شده | Method 2: Full Deployed Version
+
+برای استفاده از همه قابلیت‌ها (سیگنال‌های زنده، تلگرام، نوتیفیکیشن)، اپ رو deploy کن:
+
+1. Fork یا clone این ریپو
+2. به [Vercel](https://vercel.com) یا [Netlify](https://netlify.com) برو (هر دو رایگان هستن)
+3. ریپو رو connect کن و deploy کن
+4. URL اپ deployed شده رو در گوشی باز کن
+5. مراحل Add to Home Screen رو دنبال کن
+
+### نصب در گوشی | Install on Phone
+
+#### 📱 اندروید (Chrome)
+1. آدرس اپ رو در Chrome باز کن
+2. روی منوی سه‌نقطه (⋮) بالا-راست بزن
+3. **Add to Home screen** یا **Install app** رو انتخاب کن
+4. روی **Add** یا **Install** بزن
+5. آیکون اپ در صفحه اصلی گوشی ظاهر می‌شه
+
+#### 🍎 آیفون/آیپد (Safari)
+1. آدرس اپ رو در **Safari** باز کن (نه Chrome)
+2. روی دکمه **Share** (مربع با فلش رو به بالا) در پایین بزن
+3. **Add to Home Screen** رو انتخاب کن
+4. روی **Add** بزن
+5. آیکون اپ در صفحه اصلی ظاهر می‌شه
+
+> 💡 **نکته آیفون**: فقط در Safari می‌تونی اپ رو Add to Home Screen کنی.
+
 ## ✨ Features
 
 ### 📊 Market Intelligence

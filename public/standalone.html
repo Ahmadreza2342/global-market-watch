@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#f59e0b" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Market Watch" />
+  <title>دیده‌بان بازار جهانی | Global Market Watch</title>
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Global%20Market%20Watch%22%2C%22short_name%22%3A%22Market%20Watch%22%2C%22display%22%3A%22standalone%22%2C%22theme_color%22%3A%22%23f59e0b%22%2C%22background_color%22%3A%22%230a0a0a%22%7D" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%23f59e0b'/%3E%3Ctext x='256' y='320' font-size='280' text-anchor='middle' fill='%23fff' font-family='Arial'%3EG%3C/text%3E%3C/svg%3E" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%23f59e0b'/%3E%3Ctext x='256' y='320' font-size='280' text-anchor='middle' fill='%23fff' font-family='Arial'%3EG%3C/text%3E%3C/svg%3E" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --bg: #0a0a0a;
+      --fg: #fafafa;
+      --muted: #737373;
+      --card: #171717;
+      --border: rgba(255,255,255,0.1);
+      --amber: #f59e0b;
+      --rose: #e11d48;
+      --emerald: #10b981;
+      --sky: #0ea5e9;
+      --violet: #8b5cf6;
+    }
+    [data-theme="light"] {
+      --bg: #fafafa;
+      --fg: #0a0a0a;
+      --muted: #737373;
+      --card: #ffffff;
+      --border: rgba(0,0,0,0.1);
+    }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      font-size: 14px;
+      line-height: 1.5;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .container { max-width: 768px; margin: 0 auto; padding: 0 1rem; }
+    
+    /* Header */
+    header {
+      position: sticky; top: 0; z-index: 10;
+      background: color-mix(in srgb, var(--bg) 80%, transparent);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding-top: env(safe-area-inset-top);
+    }
+    .header-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 56px; gap: 0.5rem;
+    }
+    .brand { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+    .brand-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--amber), var(--rose));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: bold;
+      box-shadow: 0 4px 12px rgba(245,158,11,0.3);
+    }
+    .brand-text { font-size: 13px; font-weight: 700; }
+    .header-actions { display: flex; align-items: center; gap: 0.25rem; }
+    .icon-btn {
+      background: transparent; border: none; color: var(--fg);
+      width: 36px; height: 36px; border-radius: 8px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .icon-btn:active { background: var(--border); }
+    
+    /* Hero */
+    .hero {
+      padding: 1.5rem 1rem 1rem;
+      background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(225,29,72,0.05));
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: 1.5rem; font-weight: 800; line-height: 1.3;
+      background: linear-gradient(135deg, var(--amber), var(--rose));
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    .hero p { color: var(--muted); font-size: 0.85rem; }
+    
+    /* Nav tabs */
+    .tabs {
+      display: flex; gap: 0.25rem; overflow-x: auto; padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .tab {
+      background: transparent; border: none; color: var(--muted);
+      padding: 0.4rem 0.75rem; border-radius: 8px; cursor: pointer;
+      font-size: 0.8rem; white-space: nowrap; font-weight: 500;
+    }
+    .tab.active { background: var(--amber); color: white; }
+    
+    /* Cards */
+    main { padding: 1rem; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+    .card-title { font-size: 0.95rem; font-weight: 700; }
+    .card-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--amber), var(--rose));
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-left: 0.5rem;
+    }
+    
+    /* Brief */
+    .brief { padding: 0.75rem; background: rgba(245,158,11,0.05); border-radius: 8px; border: 1px solid rgba(245,158,11,0.2); }
+    .brief h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+    .brief p { color: var(--muted); font-size: 0.85rem; line-height: 1.6; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.75rem; }
+    .stat { text-align: center; }
+    .stat-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-value { font-size: 0.85rem; font-weight: 700; margin-top: 0.125rem; }
+    
+    /* Signal cards */
+    .signal-grid { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
+    @media (min-width: 640px) { .signal-grid { grid-template-columns: 1fr 1fr; } }
+    .signal-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 0.875rem;
+    }
+    .signal-card.strong { border-color: var(--amber); background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(225,29,72,0.03)); }
+    .signal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+    .direction-badge {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700;
+    }
+    .direction-long { background: rgba(16,185,129,0.15); color: var(--emerald); border: 1px solid rgba(16,185,129,0.3); }
+    .direction-short { background: rgba(225,29,72,0.15); color: var(--rose); border: 1px solid rgba(225,29,72,0.3); }
+    .direction-neutral { background: var(--border); color: var(--muted); }
+    
+    .strength-bar {
+      height: 8px; background: var(--border); border-radius: 999px;
+      overflow: hidden; position: relative; margin: 0.5rem 0;
+    }
+    .strength-fill {
+      height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, var(--amber), var(--rose));
+      transition: width 0.6s;
+    }
+    .levels { display: grid; grid-template-columns: 3, 1fr; gap: 0.5rem; margin-top: 0.5rem; }
+    .levels { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem; }
+    .level {
+      background: rgba(255,255,255,0.03); border-radius: 6px; padding: 0.5rem;
+      text-align: center;
+    }
+    .level-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; }
+    .level-value { font-size: 0.8rem; font-weight: 700; margin-top: 0.125rem; }
+    
+    /* News */
+    .news-item {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.75rem; margin-bottom: 0.5rem;
+    }
+    .news-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }
+    .news-cat {
+      font-size: 0.65rem; padding: 0.15rem 0.4rem; border-radius: 4px;
+      background: rgba(139,92,246,0.15); color: var(--violet);
+    }
+    .news-impact { font-size: 0.65rem; }
+    .news-impact.positive { color: var(--emerald); }
+    .news-impact.negative { color: var(--rose); }
+    .news-impact.neutral { color: var(--muted); }
+    .news-title { font-size: 0.85rem; font-weight: 600; line-height: 1.4; margin-bottom: 0.25rem; }
+    .news-summary { font-size: 0.75rem; color: var(--muted); line-height: 1.5; }
+    
+    /* Trader cards */
+    .trader-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.75rem; margin-bottom: 0.5rem;
+    }
+    .trader-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+    .trader-rank {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--amber), var(--rose));
+      color: white; display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700; flex-shrink: 0;
+    }
+    .trader-name { font-size: 0.85rem; font-weight: 600; }
+    .trader-broker { font-size: 0.65rem; color: var(--muted); }
+    .trader-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin: 0.5rem 0; font-size: 0.7rem; }
+    .trader-stat { text-align: center; }
+    .trader-stat-label { color: var(--muted); font-size: 0.6rem; }
+    .trader-stat-value { font-weight: 600; font-size: 0.75rem; }
+    .trader-stat-value.positive { color: var(--emerald); }
+    .trader-stat-value.negative { color: var(--rose); }
+    
+    /* Footer */
+    footer {
+      margin-top: 2rem; padding: 1.5rem 1rem;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.7rem;
+    }
+    
+    /* Buttons */
+    .btn {
+      background: linear-gradient(135deg, var(--amber), var(--rose));
+      color: white; border: none; padding: 0.5rem 1rem;
+      border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+    }
+    .btn:active { transform: scale(0.97); }
+    
+    .badge {
+      display: inline-block; padding: 0.15rem 0.5rem;
+      border-radius: 999px; font-size: 0.65rem; font-weight: 600;
+      background: rgba(16,185,129,0.15); color: var(--emerald);
+    }
+    
+    .pulse { animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    
+    /* Hint */
+    .install-hint {
+      margin: 0.5rem 1rem; padding: 0.75rem;
+      background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(225,29,72,0.05));
+      border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 12px; font-size: 0.75rem;
+    }
+    .install-hint strong { color: var(--amber); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container header-inner">
+      <div class="brand" onclick="setView('dashboard')">
+        <div class="brand-icon">G</div>
+        <div>
+          <div class="brand-text">دیده‌بان بازار جهانی</div>
+          <div style="font-size:0.65rem;color:var(--muted)">Global Market Watch</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" onclick="toggleLang()" id="langBtn">EN</button>
+        <button class="icon-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-view="dashboard" onclick="setView('dashboard')">داشبورد</button>
+      <button class="tab" data-view="signals" onclick="setView('signals')">سیگنال‌ها</button>
+      <button class="tab" data-view="news" onclick="setView('news')">اخبار</button>
+      <button class="tab" data-view="traders" onclick="setView('traders')">تریدرها</button>
+    </nav>
+  </header>
+
+  <div id="content"></div>
+
+  <footer>
+    <div>© 2026 دیده‌بان بازار جهانی</div>
+    <div style="margin-top:0.25rem">این نسخه برای نمایش آفلاین است — نسخه کامل در آدرس آنلاین</div>
+  </footer>
+
+  <script>
+    // ============ State ============
+    let lang = localStorage.getItem("gmw_lang") || "fa";
+    let theme = localStorage.getItem("gmw_theme") || "dark";
+
+    // ============ Sample data ============
+    const SAMPLE_BRIEF = {
+      title: "Global Economic Concerns Drive Safe-Haven Demand",
+      summary: "The global economy faces multiple challenges including energy shocks, food insecurity, and inflation, creating uncertainty that typically benefits gold as a safe-haven asset.",
+      keyPoints: [
+        "Global economy described as 'shaky' with multiple crises including food insecurity and energy shocks",
+        "IMF director notes tug-of-war between energy shock and AI boom",
+        "Treasury bonds seeing volatility with investors seeking shelter from market turbulence",
+        "Chile's pension funds appealing for curbs on volatile markets"
+      ],
+      sentiment: "bullish",
+      confidence: 75,
+      volatility: "medium",
+      riskLevel: "medium",
+      recommendedAction: "Consider increasing gold exposure as a hedge against global economic uncertainty."
+    };
+
+    const SAMPLE_INDICATORS = {
+      goldPrice: { value: "2,475.50", change: "+0.85%", changeType: "up", unit: "$/oz", note: "Gold benefiting from safe-haven demand amid global uncertainty" },
+      dxy: { value: "101.78", change: "-0.27%", changeType: "down", unit: "", note: "Dollar slightly weaker as risk sentiment improves" },
+      treasury10y: { value: "4.21%", change: "+0.04%", changeType: "up", unit: "", note: "Yields slightly higher ahead of Fed meeting" },
+      interestRate: { value: "5.50%", change: "0%", changeType: "flat", unit: "", note: "Fed funds rate held at 22-year high" },
+      inflation: { value: "3.7%", change: "+0.3%", changeType: "up", unit: "", note: "CPI slightly above expectations at 3.7%" }
+    };
+
+    const SAMPLE_SIGNALS = [
+      {
+        symbol: "XAU/USD", timeframe: "15m", direction: "long", strength: 28,
+        entry: "2,475.50", takeProfit: "2,478.20", stopLoss: "2,473.80",
+        technical: { strength: 40, direction: "neutral" },
+        newsBias: { strength: 65, direction: "long" },
+        traderBias: { strength: 35, direction: "neutral" },
+        reason: "MACD bullish cross; news bias positive for gold"
+      },
+      {
+        symbol: "XAU/USD", timeframe: "1h", direction: "long", strength: 82,
+        entry: "2,475.50", takeProfit: "2,495.00", stopLoss: "2,465.00",
+        technical: { strength: 70, direction: "long" },
+        newsBias: { strength: 65, direction: "long" },
+        traderBias: { strength: 60, direction: "long" },
+        reason: "EMA stack bullish (9>21>50); uptrend confirmed; news bias positive; top traders aligned"
+      },
+      {
+        symbol: "WTI/USD", timeframe: "15m", direction: "short", strength: 55,
+        entry: "78.40", takeProfit: "78.10", stopLoss: "78.65",
+        technical: { strength: 45, direction: "short" },
+        newsBias: { strength: 50, direction: "neutral" },
+        traderBias: { strength: 35, direction: "short" },
+        reason: "RSI overbought; MACD bearish cross"
+      },
+      {
+        symbol: "WTI/USD", timeframe: "1h", direction: "neutral", strength: 30,
+        entry: "78.40", takeProfit: "78.30", stopLoss: "78.50",
+        technical: { strength: 25, direction: "neutral" },
+        newsBias: { strength: 30, direction: "neutral" },
+        traderBias: { strength: 35, direction: "neutral" },
+        reason: "Mixed signals; wait for clearer catalyst"
+      }
+    ];
+
+    const SAMPLE_NEWS = [
+      { category: "fed", impact: "neutral", title: "Federal Reserve Holds Rates Steady", summary: "The Fed maintained its benchmark rate at 5.50%, signaling patience on future cuts amid persistent inflation.", source: "Federal Reserve" },
+      { category: "war", impact: "positive", title: "Middle East Tensions Escalate", summary: "Rising geopolitical tensions in the Middle East are driving safe-haven demand for gold.", source: "Reuters" },
+      { category: "economy", impact: "negative", title: "US CPI Above Expectations at 3.7%", summary: "Consumer Price Index came in above market expectations, reducing odds of near-term rate cuts.", source: "BLS" },
+      { category: "crisis", impact: "positive", title: "Global Energy Crisis Concerns Grow", summary: "Energy price volatility continues as supply chain disruptions affect global markets.", source: "Bloomberg" },
+      { category: "politics", impact: "neutral", title: "Treasury Bond Yields Climb", summary: "10-year Treasury yields rose to 4.21% as investors reassess Fed policy path.", source: "CNBC" },
+      { category: "economy", impact: "negative", title: "Strong Jobs Data Pushes Dollar Higher", summary: "Better-than-expected employment numbers strengthened the dollar index.", source: "MarketWatch" }
+    ];
+
+    const SAMPLE_TRADERS = [
+      { rank: 1, name: "Alpha Gold Hunter", broker: "IC Markets", gain: 412.5, monthly: 12.4, dd: 18.3, winRate: 71, trades: 1820, days: 489, strategy: "Scalper", risk: "aggressive", behavior: "High-frequency scalper with disciplined stop-loss — tends to add to winners during London/NY overlap.", instruments: ["XAU/USD"] },
+      { rank: 2, name: "Steady Trend Rider", broker: "Pepperstone", gain: 287.3, monthly: 8.9, dd: 9.8, winRate: 64, trades: 612, days: 542, strategy: "Trend Follower", risk: "moderate", behavior: "Trend follower using EMA50 + RSI; holds positions 1-3 days, scales in on pullbacks.", instruments: ["XAU/USD", "EUR/USD"] },
+      { rank: 3, name: "Oil Sniper Pro", broker: "FXTM", gain: 358.1, monthly: 10.7, dd: 22.4, winRate: 68, trades: 1240, days: 421, strategy: "Day Trader", risk: "aggressive", behavior: "Oil specialist — trades WTI breakouts during US session, scales out at +1 ATR and +2 ATR.", instruments: ["WTI/USD"] },
+      { rank: 4, name: "Gold Quantum AI", broker: "Exness", gain: 245.9, monthly: 7.2, dd: 12.1, winRate: 75, trades: 948, days: 510, strategy: "Swing Trader", risk: "moderate", behavior: "Multi-timeframe swing trader on gold — entries on 1h EMA cross with daily trend filter.", instruments: ["XAU/USD"] },
+      { rank: 5, name: "Safe Haven Capital", broker: "OANDA", gain: 156.4, monthly: 4.8, dd: 5.6, winRate: 82, trades: 410, days: 612, strategy: "Swing Trader", risk: "conservative", behavior: "Risk-averse — small position size, very wide stops, only trades high-conviction setups.", instruments: ["XAU/USD", "USD/CHF"] }
+    ];
+
+    // ============ Render functions ============
+    function render() {
+      const app = document.getElementById("content");
+      const view = window.currentView || "dashboard";
+
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === "fa" ? "rtl" : "ltr";
+      document.getElementById("langBtn").textContent = lang === "fa" ? "EN" : "فا";
+      document.getElementById("themeBtn").textContent = theme === "dark" ? "🌙" : "☀️";
+      document.documentElement.setAttribute("data-theme", theme);
+
+      // Update active tab
+      document.querySelectorAll(".tab").forEach(t => {
+        t.classList.toggle("active", t.dataset.view === view);
+      });
+
+      if (view === "dashboard") {
+        app.innerHTML = renderDashboard();
+      } else if (view === "signals") {
+        app.innerHTML = renderSignals();
+      } else if (view === "news") {
+        app.innerHTML = renderNews();
+      } else if (view === "traders") {
+        app.innerHTML = renderTraders();
+      }
+    }
+
+    function renderDashboard() {
+      const brief = SAMPLE_BRIEF;
+      const indicators = SAMPLE_INDICATORS;
+      const signals = SAMPLE_SIGNALS;
+      const langLabel = (fa, en) => lang === "fa" ? fa : en;
+
+      return `
+        <section class="hero">
+          <h1>${langLabel("تحلیل هوشمند بازارهای جهانی", "Smart Global Market Analysis")}</h1>
+          <p>${langLabel("اخبار روز، شاخص‌های اقتصادی، و نقاط ورود/خروج برای طلا و نفت", "Daily news, indicators, and entry/exit points for gold and crude oil")}</p>
+        </section>
+
+        <div class="install-hint">
+          💡 <strong>${langLabel("نصب اپ:", "Install app:")}</strong>
+          ${langLabel("برای نصب در گوشی، در منوی مرورگر Add to Home Screen را بزنید", "To install on your phone, tap 'Add to Home Screen' from your browser menu")}
+        </div>
+
+        <main>
+          <!-- Daily brief -->
+          <div class="card">
+            <div class="card-header">
+              <div style="display:flex;align-items:center;">
+                <span class="card-icon">📊</span>
+                <span class="card-title">${langLabel("خلاصه روزانه", "Daily Brief")}</span>
+              </div>
+              <span class="badge pulse">● ${langLabel("زنده", "Live")}</span>
+            </div>
+            <div class="brief">
+              <h3>${brief.title}</h3>
+              <p>${brief.summary}</p>
+              <ul style="margin:0.75rem 0; padding-right:1.25rem;">
+                ${brief.keyPoints.map(p => `<li style="font-size:0.8rem;margin-bottom:0.3rem;color:var(--muted);">${p}</li>`).join("")}
+              </ul>
+              <div class="stats">
+                <div class="stat"><div class="stat-label">${langLabel("احساس", "Sentiment")}</div><div class="stat-value" style="color:var(--emerald)">${langLabel("صعودی", "Bullish")}</div></div>
+                <div class="stat"><div class="stat-label">${langLabel("اطمینان", "Conf.")}</div><div class="stat-value" style="color:var(--amber)">${brief.confidence}%</div></div>
+                <div class="stat"><div class="stat-label">${langLabel("نوسان", "Volatility")}</div><div class="stat-value">${langLabel("متوسط", "Med")}</div></div>
+                <div class="stat"><div class="stat-label">${langLabel("ریسک", "Risk")}</div><div class="stat-value">${langLabel("متوسط", "Med")}</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Multi-TF signals -->
+          <div class="card">
+            <div class="card-header">
+              <div style="display:flex;align-items:center;">
+                <span class="card-icon">⚡</span>
+                <span class="card-title">${langLabel("سیگنال چند تایم‌فریم", "Multi-Timeframe Signals")}</span>
+              </div>
+            </div>
+            ${signals.map(s => renderSignalCard(s)).join("")}
+          </div>
+
+          <!-- Indicators -->
+          <div class="card">
+            <div class="card-header">
+              <div style="display:flex;align-items:center;">
+                <span class="card-icon">📈</span>
+                <span class="card-title">${langLabel("شاخص‌های اقتصادی", "Economic Indicators")}</span>
+              </div>
+            </div>
+            ${renderIndicator("🥇", langLabel("طلا (XAU/USD)", "Gold (XAU/USD)"), indicators.goldPrice)}
+            ${renderIndicator("💵", langLabel("شاخص دلار (DXY)", "Dollar Index (DXY)"), indicators.dxy)}
+            ${renderIndicator("📉", langLabel("بازده اوراق ۱۰ساله", "10Y Treasury Yield"), indicators.treasury10y)}
+            ${renderIndicator("🏛", langLabel("نرخ بهره فدرال", "Fed Funds Rate"), indicators.interestRate)}
+            ${renderIndicator("🔥", langLabel("تورم CPI", "CPI Inflation"), indicators.inflation)}
+          </div>
+        </main>
+      `;
+    }
+
+    function renderIndicator(icon, label, ind) {
+      const changeColor = ind.changeType === "up" ? "var(--emerald)" : ind.changeType === "down" ? "var(--rose)" : "var(--muted)";
+      const arrow = ind.changeType === "up" ? "↑" : ind.changeType === "down" ? "↓" : "→";
+      return `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem;background:rgba(255,255,255,0.03);border-radius:8px;margin-bottom:0.4rem;">
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <span style="font-size:1.1rem;">${icon}</span>
+            <div>
+              <div style="font-size:0.8rem;font-weight:600;">${label}</div>
+              <div style="font-size:0.65rem;color:var(--muted)">${ind.note}</div>
+            </div>
+          </div>
+          <div style="text-align:left;">
+            <div style="font-size:1rem;font-weight:700;">${ind.value}${ind.unit ? " " + ind.unit : ""}</div>
+            <div style="font-size:0.7rem;color:${changeColor};">${arrow} ${ind.change}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSignalCard(s) {
+      const isStrong = s.strength >= 75;
+      const dirLabel = s.direction === "long" ? (lang === "fa" ? "خرید" : "BUY") : s.direction === "short" ? (lang === "fa" ? "فروش" : "SELL") : (lang === "fa" ? "خنثی" : "NEUTRAL");
+      const dirClass = `direction-${s.direction}`;
+      const dirIcon = s.direction === "long" ? "🟢" : s.direction === "short" ? "🔴" : "⚪";
+      return `
+        <div class="signal-card ${isStrong ? "strong" : ""}">
+          <div class="signal-header">
+            <div style="display:flex;align-items:center;gap:0.4rem;">
+              <span class="direction-badge ${dirClass}">${dirIcon} ${dirLabel}</span>
+              <div>
+                <div style="font-size:0.85rem;font-weight:700;">${s.symbol}</div>
+                <div style="font-size:0.65rem;color:var(--muted)">${s.timeframe.toUpperCase()}</div>
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:0.6rem;color:var(--muted);text-transform:uppercase;">${lang === "fa" ? "قدرت" : "Strength"}</div>
+              <div style="font-size:1rem;font-weight:700;color:${isStrong ? "var(--amber)" : "var(--fg)"}">${s.strength}</div>
+            </div>
+          </div>
+          <div class="strength-bar"><div class="strength-fill" style="width:${s.strength}%"></div></div>
+          <div class="levels">
+            <div class="level"><div class="level-label">${lang === "fa" ? "ورود" : "Entry"}</div><div class="level-value" style="color:var(--amber)">${s.entry}</div></div>
+            <div class="level"><div class="level-label">${lang === "fa" ? "حد سود" : "TP"}</div><div class="level-value" style="color:var(--emerald)">${s.takeProfit}</div></div>
+            <div class="level"><div class="level-label">${lang === "fa" ? "حد ضرر" : "SL"}</div><div class="level-value" style="color:var(--rose)">${s.stopLoss}</div></div>
+          </div>
+          <div style="font-size:0.7rem;color:var(--muted);margin-top:0.5rem;line-height:1.5;">${s.reason}</div>
+        </div>
+      `;
+    }
+
+    function renderSignals() {
+      const signals = SAMPLE_SIGNALS;
+      return `
+        <main>
+          <div class="card">
+            <div class="card-header">
+              <div style="display:flex;align-items:center;">
+                <span class="card-icon">⚡</span>
+                <span class="card-title">${lang === "fa" ? "سیگنال‌های معاملاتی" : "Trading Signals"}</span>
+              </div>
+            </div>
+            <div class="signal-grid">
+              ${signals.map(s => renderSignalCard(s)).join("")}
+            </div>
+          </div>
+          <div style="padding:0.75rem;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;font-size:0.75rem;color:var(--muted);margin-top:1rem;">
+            ⚠️ ${lang === "fa" ? "هشدار: این تحلیل آموزشی است و پیشنهاد سرمایه‌گذاری نیست." : "Disclaimer: This analysis is educational, not investment advice."}
+          </div>
+        </main>
+      `;
+    }
+
+    function renderNews() {
+      const news = SAMPLE_NEWS;
+      return `
+        <main>
+          <div class="card">
+            <div class="card-header">
+              <div style="display:flex;align-items:center;">
+                <span class="card-icon">📰</span>
+                <span class="card-title">${lang === "fa" ? "اخبار روزانه" : "Daily News"}</span>
+              </div>
+              <span class="badge">${news.length} ${lang === "fa" ? "خبر" : "items"}</span>
+            </div>
+            ${news.map(n => `
+              <div class="news-item">
+                <div class="news-header">
+                  <span class="news-cat">${n.category}</span>
+                  <span class="news-impact ${n.impact}">${n.impact === "positive" ? (lang === "fa" ? "مثبت" : "Positive") : n.impact === "negative" ? (lang === "fa" ? "منفی" : "Negative") : (lang === "fa" ? "خنثی" : "Neutral")}</span>
+                </div>
+                <div class="news-title">${n.title}</div>
+                <div class="news-summary">${n.summary}</div>
+                <div style="font-size:0.65rem;color:var(--muted);margin-top:0.4rem;">📌 ${n.source}</div>
+              </div>
+            `).join("")}
+          </div>
+        </main>
+      `;
+    }
+
+    function renderTraders() {
+      const traders = SAMPLE_TRADERS;
+      return `
+        <main>
+          <div class="card">
+            <div class="card-header">
+              <div style="display:flex;align-items:center;">
+                <span class="card-icon">🏆</span>
+                <span class="card-title">${lang === "fa" ? "۱۰ تریدر برتر MQL5" : "Top 10 MQL5 Traders"}</span>
+              </div>
+            </div>
+            ${traders.map(t => renderTraderCard(t)).join("")}
+          </div>
+        </main>
+      `;
+    }
+
+    function renderTraderCard(t) {
+      const riskColor = t.risk === "aggressive" ? "var(--rose)" : t.risk === "conservative" ? "var(--emerald)" : "var(--amber)";
+      return `
+        <div class="trader-card">
+          <div class="trader-header">
+            <div class="trader-rank">${t.rank}</div>
+            <div style="flex:1;min-width:0;">
+              <div class="trader-name">${t.name}</div>
+              <div class="trader-broker">${t.broker} • ${t.strategy}</div>
+            </div>
+            <span class="news-cat" style="background:rgba(${t.risk === "aggressive" ? "225,29,72" : t.risk === "conservative" ? "16,185,129" : "245,158,11"},0.15);color:${riskColor};">
+              ${t.risk === "aggressive" ? (lang === "fa" ? "تهاجمی" : "Aggressive") : t.risk === "conservative" ? (lang === "fa" ? "محافظه‌کار" : "Conservative") : (lang === "fa" ? "متعادل" : "Moderate")}
+            </span>
+          </div>
+          <div class="trader-stats">
+            <div class="trader-stat"><div class="trader-stat-label">${lang === "fa" ? "سود کل" : "Gain"}</div><div class="trader-stat-value positive">+${t.gain}%</div></div>
+            <div class="trader-stat"><div class="trader-stat-label">${lang === "fa" ? "ماهانه" : "Monthly"}</div><div class="trader-stat-value positive">+${t.monthly}%</div></div>
+            <div class="trader-stat"><div class="trader-stat-label">${lang === "fa" ? "افت" : "Drawdown"}</div><div class="trader-stat-value negative">${t.dd}%</div></div>
+            <div class="trader-stat"><div class="trader-stat-label">${lang === "fa" ? "نرخ برد" : "Win Rate"}</div><div class="trader-stat-value">${t.winRate}%</div></div>
+            <div class="trader-stat"><div class="trader-stat-label">${lang === "fa" ? "معاملات" : "Trades"}</div><div class="trader-stat-value">${t.trades.toLocaleString()}</div></div>
+            <div class="trader-stat"><div class="trader-stat-label">${lang === "fa" ? "روزها" : "Days"}</div><div class="trader-stat-value">${t.days}</div></div>
+          </div>
+          <div style="font-size:0.7rem;color:var(--muted);padding:0.4rem;background:rgba(255,255,255,0.03);border-radius:6px;">
+            <strong style="color:var(--fg);">${lang === "fa" ? "تحلیل رفتار:" : "Behavior:"}</strong> ${t.behavior}
+          </div>
+          <div style="margin-top:0.5rem;">
+            ${t.instruments.map(i => `<span class="news-cat" style="margin-left:0.25rem;">${i}</span>`).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    // ============ Actions ============
+    window.currentView = "dashboard";
+    window.setView = function(v) {
+      window.currentView = v;
+      render();
+      window.scrollTo(0, 0);
+    };
+    window.toggleLang = function() {
+      lang = lang === "fa" ? "en" : "fa";
+      localStorage.setItem("gmw_lang", lang);
+      render();
+    };
+    window.toggleTheme = function() {
+      theme = theme === "dark" ? "light" : "dark";
+      localStorage.setItem("gmw_theme", theme);
+      render();
+    };
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>

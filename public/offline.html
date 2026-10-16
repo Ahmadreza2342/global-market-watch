@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>آفلاین | دیده‌بان بازار جهانی</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, sans-serif;
+      background: #0a0a0a;
+      color: #fafafa;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .container {
+      max-width: 28rem;
+      text-align: center;
+      padding: 2rem;
+      border-radius: 1rem;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(225, 29, 72, 0.1));
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .icon {
+      width: 6rem;
+      height: 6rem;
+      margin: 0 auto 1.5rem;
+      background: linear-gradient(135deg, #f59e0b, #e11d48);
+      border-radius: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 0.75rem; }
+    p { color: #a3a3a3; line-height: 1.6; margin-bottom: 1.5rem; font-size: 0.95rem; }
+    button {
+      background: linear-gradient(135deg, #f59e0b, #e11d48);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.2s;
+    }
+    button:active { transform: scale(0.97); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">📡</div>
+    <h1>شما آفلاین هستید</h1>
+    <p>
+      برای دیدن آخرین سیگنال‌ها، اخبار و شاخص‌های بازار،
+      لطفاً به اینترنت متصل شوید.
+      <br />
+      <br />
+      تنظیمات تلگرام شما ذخیره شده و پس از اتصال مجدد کار خواهد کرد.
+    </p>
+    <button onclick="window.location.reload()">تلاش مجدد</button>
+  </div>
+  <script>
+    // Auto-reload when connection returns
+    window.addEventListener("online", () => window.location.reload());
+  </script>
+</body>
+</html>

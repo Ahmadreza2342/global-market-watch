@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sun, Moon, Languages, Globe, Activity } from "lucide-react";
 import { useState, useEffect } from "react";
 import { AuthDialog } from "@/components/auth-dialog";
+import { InstallButton } from "@/components/install-button";
 
 interface HeaderProps {
   active: string;
@@ -92,7 +93,7 @@ export function Header({ active, onNavigate }: HeaderProps) {
 
             {user ? (
               <div className="flex items-center gap-2">
-                <span className="hidden sm:inline text-xs text-muted-foreground">
+                <span className="hidden lg:inline text-xs text-muted-foreground">
                   {user.name || user.email}
                 </span>
                 <form
@@ -115,6 +116,7 @@ export function Header({ active, onNavigate }: HeaderProps) {
                 </Button>
               </div>
             )}
+            <InstallButton />
           </div>
         </div>
 

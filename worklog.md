@@ -211,3 +211,78 @@ Stage Summary:
 - Verified sensitive files NOT accessible via API in any commit
 - Remote URL is clean (no embedded token)
 - User warned that the token was exposed in chat history and should be revoked + regenerated
+
+---
+Task ID: mobile-pwa
+Agent: main (Z.ai GLM)
+Task: Make the app installable on phone — user wants to download from GitHub and install on their phone.
+
+Work Log:
+- Created `public/icon.svg` (animated market-watch logo, gradient amber→rose, 512x512)
+- Created `scripts/generate-icons.py` — uses cairosvg to render SVG → PNG
+- Generated 4 PNG icons: `icon-192.png`, `icon-256.png`, `icon-384.png`, `icon-512.png` in `/public`
+- Created `public/manifest.json` — PWA manifest with:
+  - name/short_name (fa/en), lang=fa, dir=rtl
+  - display=standalone, orientation=portrait-primary
+  - theme_color=#f59e0b, background_color=#0a0a0a
+  - 5 icon entries (PNG + SVG, all sizes, maskable)
+  - 3 shortcuts (Dashboard, Signals, Traders)
+  - categories: finance, business, news, productivity
+- Created `public/sw.js` — service worker with:
+  - Static asset caching (install)
+  - Old cache cleanup (activate)
+  - Network-first for navigation, cache-first for static, stale-while-revalidate for API
+  - Falls back to /offline.html when network fails
+- Created `public/offline.html` — RTL Persian page with retry button, auto-reload on online
+- Updated `src/app/layout.tsx`:
+  - Added manifest, icons, appleWebApp metadata
+  - Added Viewport export with themeColor, viewportFit=cover (for iPhone notch)
+  - Added apple-touch-icon links, mobile-web-app-capable, format-detection meta tags
+  - Injected service worker registration script via dangerouslySetInnerHTML
+- Created `src/components/install-button.tsx` — captures `beforeinstallprompt` event:
+  - Shows "نصب اپ / Install App" button in header
+  - Triggers native install prompt on supported browsers
+  - Falls back to dialog with iOS/Android/Desktop step-by-step guide
+  - Has "Don't show again" option (localStorage)
+  - Bottom sheet for mobile, dialog for desktop
+- Added `InstallButton` to `Header` (always visible, between auth and right edge)
+- Created `public/standalone.html` — single-file offline PWA version (32KB):
+  - Self-contained: HTML + CSS + JS, no external dependencies
+  - Embeds inline manifest + icon as data: URLs
+  - Uses sample data (brief, 5 indicators, 4 multi-TF signals, 6 news items, 5 traders)
+  - Same UI as full app: Hero, Daily Brief, Multi-TF Signals, Indicators, News, Traders
+  - Bilingual (fa/en) with persistent localStorage
+  - Dark/Light theme toggle
+  - 4 nav tabs (Dashboard, Signals, News, Traders)
+  - Hint box: "Install app: Add to Home Screen from browser menu"
+  - Fixed JS syntax error in template literal (extra `)` in `Behavior:"`)
+- Updated `README.md` with comprehensive phone installation guide:
+  - Method 1: Single-file offline (download standalone.html from GitHub)
+  - Method 2: Full deployed version (Vercel/Netlify)
+  - Android (Chrome) Add to Home Screen steps
+  - iOS (Safari) Add to Home Screen steps
+  - Tip: iOS only works in Safari
+
+Stage Summary:
+- PWA support complete:
+  - manifest.json ✓
+  - service worker (sw.js) ✓
+  - offline.html fallback ✓
+  - apple-touch-icon + iOS meta tags ✓
+  - InstallButton with iOS/Android/Desktop guides ✓
+  - Auto SW registration in layout ✓
+- Standalone HTML verified working via Agent Browser:
+  - Dashboard tab shows brief, multi-TF signals, indicators ✓
+  - Signals tab shows 4 signal cards with strength bars ✓
+  - News tab shows 6 news items with categories and impacts ✓
+  - Traders tab shows 5 sample traders with stats ✓
+  - Language toggle (fa↔en) works ✓
+  - Theme toggle (dark↔light) works ✓
+  - Viewport set to 390×844 (iPhone 14) for mobile testing ✓
+- Lint clean (0 errors)
+- Phone installation path:
+  1. User downloads `public/standalone.html` from GitHub repo
+  2. Opens in phone browser (Chrome/Android or Safari/iOS)
+  3. Browser menu → "Add to Home Screen"
+  4. App icon appears on phone home screen — opens in standalone mode
+- For full features (live signals, Telegram, notifications), user must deploy to Vercel/Netlify and follow same Add to Home Screen process

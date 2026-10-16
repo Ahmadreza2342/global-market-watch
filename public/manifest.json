@@ -1,0 +1,63 @@
+{
+  "name": "دیده‌بان بازار جهانی - Global Market Watch",
+  "short_name": "Market Watch",
+  "description": "تحلیل روزانه اخبار و شاخص‌های اقتصادی-سیاسی جهان با تمرکز بر طلا و نفت",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#f59e0b",
+  "background_color": "#0a0a0a",
+  "categories": ["finance", "business", "news", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-256.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "داشبورد",
+      "short_name": "Dashboard",
+      "url": "/?view=dashboard"
+    },
+    {
+      "name": "سیگنال‌ها",
+      "short_name": "Signals",
+      "url": "/?view=signals"
+    },
+    {
+      "name": "تریدرها",
+      "short_name": "Traders",
+      "url": "/?view=traders"
+    }
+  ]
+}
