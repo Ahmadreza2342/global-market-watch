@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchTopTraders, generateMultiTfSignals, type MultiTfSignal } from "@/lib/mt5";
 import { getCached, setCached, todayKey } from "@/lib/cache";
-import { db } from "@/lib/db";
+import { db, ensureDbInitialized } from "@/lib/db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    await ensureDbInitialized();
     // Get traders (cached)
     const traderCache = await getCached<{ traders: Awaited<ReturnType<typeof fetchTopTraders>> }>(todayKey(), "traders");
     let traders = traderCache?.traders;
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
             source: "composite",
             reason: s.reason.slice(0, 500),
           },
-        }).catch(() => {}); // ignore DB errors
+        }).catch((e) => console.error("[multi-tf] DB write error:", e));
       }
     }
 

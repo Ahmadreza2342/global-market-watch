@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db, ensureDbInitialized } from "./db";
 import { cookies } from "next/headers";
 import { randomBytes, createHash } from "crypto";
 
@@ -24,42 +24,54 @@ export async function registerUser(
   password: string,
   name?: string
 ): Promise<{ user: AuthUser; token: string } | { error: string }> {
-  const existing = await db.user.findUnique({ where: { email } });
-  if (existing) return { error: "EMAIL_EXISTS" };
+  try {
+    await ensureDbInitialized();
+    const existing = await db.user.findUnique({ where: { email } });
+    if (existing) return { error: "EMAIL_EXISTS" };
 
-  const user = await db.user.create({
-    data: {
-      email,
-      name: name || null,
-      password: hashPassword(password),
-    },
-  });
+    const user = await db.user.create({
+      data: {
+        email,
+        name: name || null,
+        password: hashPassword(password),
+      },
+    });
 
-  const token = newSessionToken();
-  const expires = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
-  await setSession(token, user.id, expires);
+    const token = newSessionToken();
+    const expires = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
+    await setSession(token, user.id, expires);
 
-  return {
-    user: { id: user.id, email: user.email, name: user.name },
-    token,
-  };
+    return {
+      user: { id: user.id, email: user.email, name: user.name },
+      token,
+    };
+  } catch (err) {
+    console.error("[registerUser] error:", err);
+    return { error: "REGISTER_FAILED" };
+  }
 }
 
 export async function loginUser(
   email: string,
   password: string
 ): Promise<{ user: AuthUser; token: string } | { error: string }> {
-  const user = await db.user.findUnique({ where: { email } });
-  if (!user || user.password !== hashPassword(password)) {
-    return { error: "INVALID_CREDENTIALS" };
+  try {
+    await ensureDbInitialized();
+    const user = await db.user.findUnique({ where: { email } });
+    if (!user || user.password !== hashPassword(password)) {
+      return { error: "INVALID_CREDENTIALS" };
+    }
+    const token = newSessionToken();
+    const expires = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
+    await setSession(token, user.id, expires);
+    return {
+      user: { id: user.id, email: user.email, name: user.name },
+      token,
+    };
+  } catch (err) {
+    console.error("[loginUser] error:", err);
+    return { error: "LOGIN_FAILED" };
   }
-  const token = newSessionToken();
-  const expires = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
-  await setSession(token, user.id, expires);
-  return {
-    user: { id: user.id, email: user.email, name: user.name },
-    token,
-  };
 }
 
 // Simple in-memory session store (resets on restart). For production,
@@ -71,20 +83,26 @@ async function setSession(token: string, userId: string, expires: Date) {
 }
 
 export async function getSessionUser(): Promise<AuthUser | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE)?.value;
-  if (!token) return null;
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(SESSION_COOKIE)?.value;
+    if (!token) return null;
 
-  const session = sessions.get(token);
-  if (!session) return null;
-  if (session.expires < new Date()) {
-    sessions.delete(token);
+    const session = sessions.get(token);
+    if (!session) return null;
+    if (session.expires < new Date()) {
+      sessions.delete(token);
+      return null;
+    }
+
+    await ensureDbInitialized();
+    const user = await db.user.findUnique({ where: { id: session.userId } });
+    if (!user) return null;
+    return { id: user.id, email: user.email, name: user.name };
+  } catch (err) {
+    console.error("[getSessionUser] error:", err);
     return null;
   }
-
-  const user = await db.user.findUnique({ where: { id: session.userId } });
-  if (!user) return null;
-  return { id: user.id, email: user.email, name: user.name };
 }
 
 export function getSessionCookieName() {

@@ -1,9 +1,63 @@
 import ZAI from "z-ai-web-dev-sdk";
+import { writeFileSync, existsSync, mkdirSync } from "fs";
+import { join } from "path";
 
 let zaiInstance: Awaited<ReturnType<typeof ZAI.create>> | null = null;
 
+// Ensure .z-ai-config file exists. On Vercel serverless, env vars are used
+// because /etc/.z-ai-config is read-only. We write to /tmp/.z-ai-config
+// (writable on Vercel) using env vars if provided.
+function ensureConfigFile(): void {
+  const configPaths = [
+    join(process.cwd(), ".z-ai-config"),
+    join(process.env.HOME || "/tmp", ".z-ai-config"),
+    "/etc/.z-ai-config",
+  ];
+
+  // If any existing path has the file, use it as-is
+  for (const p of configPaths) {
+    try {
+      if (existsSync(p)) return;
+    } catch {
+      // ignore
+    }
+  }
+
+  // Otherwise, build the config from env vars and write to /tmp
+  const baseUrl = process.env.Z_AI_BASE_URL;
+  const apiKey = process.env.Z_AI_API_KEY;
+  const chatId = process.env.Z_AI_CHAT_ID;
+  const token = process.env.Z_AI_TOKEN;
+  const userId = process.env.Z_AI_USER_ID;
+
+  if (!baseUrl || !apiKey || !token) return; // no env vars, let SDK fail
+
+  try {
+    const tmpDir = "/tmp";
+    try {
+      mkdirSync(tmpDir, { recursive: true });
+    } catch {
+      // ignore
+    }
+    const tmpConfig = join(tmpDir, ".z-ai-config");
+    const config = {
+      baseUrl,
+      apiKey,
+      chatId,
+      token,
+      userId,
+    };
+    writeFileSync(tmpConfig, JSON.stringify(config), { encoding: "utf-8" });
+    // Override HOME so the SDK finds /tmp/.z-ai-config
+    process.env.HOME = tmpDir;
+  } catch (err) {
+    console.error("[zai] Failed to write config from env vars:", err);
+  }
+}
+
 export async function getZAI() {
   if (!zaiInstance) {
+    ensureConfigFile();
     zaiInstance = await ZAI.create();
   }
   return zaiInstance;
@@ -30,13 +84,10 @@ export async function webSearch(
       recency_days: recencyDays,
     })) as unknown;
 
-    // The SDK can return results in a few shapes; normalize them.
     if (!raw) return [];
-
     if (Array.isArray(raw)) {
       return raw.map(normalizeResult).filter(Boolean) as WebSearchResult[];
     }
-
     if (typeof raw === "object" && raw !== null) {
       const r = raw as Record<string, unknown>;
       const arr =
@@ -48,7 +99,6 @@ export async function webSearch(
         return arr.map(normalizeResult).filter(Boolean) as WebSearchResult[];
       }
     }
-
     return [];
   } catch (err) {
     console.error("[webSearch] error:", err);
@@ -108,7 +158,6 @@ export async function analyzeJSON<T = unknown>(
 ): Promise<T | null> {
   const text = await analyzeText(systemPrompt, userPrompt, { temperature: 0.2 });
   if (!text) return null;
-  // Extract the first JSON object/array from the response
   const jsonMatch = text.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
   if (!jsonMatch) return null;
   try {
