@@ -1,0 +1,358 @@
+// Bilingual dictionary for the application
+
+export type Lang = "fa" | "en";
+
+export const translations = {
+  fa: {
+    // Brand
+    brand: "دیده‌بان بازار جهانی",
+    tagline: "تحلیل روزانه اخبار و شاخص‌های اقتصادی-سیاسی جهان",
+
+    // Navigation
+    nav: {
+      dashboard: "داشبورد",
+      news: "اخبار",
+      indicators: "شاخص‌ها",
+      signals: "سیگنال‌ها",
+      calendar: "تقویم",
+      bookmarks: "نشان‌ها",
+    },
+
+    // Common
+    common: {
+      loading: "در حال بارگذاری...",
+      refresh: "به‌روزرسانی",
+      save: "ذخیره",
+      cancel: "لغو",
+      delete: "حذف",
+      edit: "ویرایش",
+      close: "بستن",
+      view: "نمایش",
+      today: "امروز",
+      yesterday: "دیروز",
+      live: "زنده",
+      updated: "به‌روزرسانی شد",
+      search: "جستجو",
+      noData: "داده‌ای موجود نیست",
+      source: "منبع",
+      sources: "منابع",
+      seeAll: "همه را ببین",
+      lastUpdate: "آخرین به‌روزرسانی",
+    },
+
+    // Hero section
+    hero: {
+      title: "تحلیل هوشمند بازارهای جهانی",
+      subtitle: "اخبار روز، شاخص‌های اقتصادی، و نقاط ورود/خروج برای طلا (XAU/USD)",
+      cta: "شروع تحلیل روزانه",
+      ctaSecondary: "آموزش استفاده",
+    },
+
+    // Dashboard sections
+    dashboard: {
+      dailyBrief: "خلاصه روزانه",
+      dailyBriefDesc: "تحلیل هوش مصنوعی از مهم‌ترین رویدادهای روز",
+      marketMovers: "محرک‌های بازار",
+      marketMoversDesc: "عوامل موثر بر نوسان کوتاه‌مدت طلا",
+      sentiment: "احساس بازار",
+      sentimentBullish: "صعودی",
+      sentimentBearish: "نزولی",
+      sentimentNeutral: "خنثی",
+      volatility: "نوسان پیش‌بینی‌شده",
+      risk: "ریسک رویداد",
+      high: "زیاد",
+      medium: "متوسط",
+      low: "کم",
+    },
+
+    // News
+    news: {
+      title: "اخبار روزانه",
+      fed: "فدرال رزرو آمریکا",
+      war: "اخبار جنگ",
+      politics: "سیاسی",
+      economy: "اقتصادی",
+      crisis: "بحران",
+      all: "همه",
+      relatedArticles: "مقالات مرتبط",
+      impact: "تأثیر بر طلا",
+      positive: "مثبت",
+      negative: "منفی",
+      neutral: "خنثی",
+      aiSummary: "خلاصه هوش مصنوعی",
+    },
+
+    // Indicators
+    indicators: {
+      title: "شاخص‌های اقتصادی",
+      titleDesc: "متغیرهای کلانی موثر بر طلا و دلار",
+      interestRate: "نرخ بهره فدرال",
+      interestRateDesc: "سقف نرخ بهره آمریکا (FED Funds Rate)",
+      dxy: "شاخص دلار",
+      dxyDesc: "قدرت دلار در برابر سبد ارزهای اصلی",
+      inflation: "تورم CPI",
+      inflationDesc: "نرخ تورم مصرف‌کننده آمریکا",
+      treasury10y: "بازده اوراق ۱۰ساله",
+      treasury10yDesc: "بازده اوراق قرضه ۱۰ساله آمریکا",
+      goldPrice: "قیمت طلا",
+      goldPriceDesc: "قیمت جهانی اونس طلا (XAU/USD)",
+      centralBank: "فعالیت بانک‌های مرکزی",
+      centralBankDesc: "خرید/فروش طلا توسط بانک‌های مرکزی",
+      economicStats: "آمار اقتصادی",
+      economicStatsDesc: "GDP، اشتغال، تولید صنعتی آمریکا",
+      yield10y: "بازده ۱۰ساله",
+      current: "فعلی",
+      previous: "قبلی",
+      forecast: "پیش‌بینی",
+      change: "تغییر",
+    },
+
+    // Trading signals
+    signals: {
+      title: "سیگنال‌های معاملاتی",
+      titleDesc: "نقاط ورود و خروج پیشنهادی برای XAU/USD",
+      entryPoint: "نقطه ورود",
+      exitPoint: "نقطه خروج",
+      stopLoss: "حد ضرر",
+      takeProfit: "حد سود",
+      direction: "جهت",
+      long: "خرید (Long)",
+      short: "فروش (Short)",
+      neutral: "بدون موقعیت",
+      confidence: "اطمینان",
+      basis: "مبنا",
+      timeframe: "بازه زمانی",
+      shortTerm: "کوتاه‌مدت",
+      midTerm: "میان‌مدت",
+      longTerm: "بلندمدت",
+      disclaimer: "هشدار: این تحلیل آموزشی است و پیشنهاد سرمایه‌گذاری نیست.",
+    },
+
+    // Economic calendar
+    calendar: {
+      title: "تقویم اقتصادی آمریکا",
+      titleDesc: "رویدادهای اقتصادی پیش‌روی آمریکا",
+      date: "تاریخ",
+      time: "زمان",
+      event: "رویداد",
+      importance: "اهمیت",
+      actual: "واقعی",
+      forecast: "پیش‌بینی",
+      previous: "قبلی",
+      next: "بعدی",
+      today: "امروز",
+      thisWeek: "این هفته",
+    },
+
+    // Sentiment gauge
+    gauge: {
+      bullish: "صعودی",
+      bearish: "نزولی",
+      neutral: "خنثی",
+      extreme: " افراطی",
+    },
+
+    // Footer
+    footer: {
+      disclaimer: "این پلتفرم صرفاً جهت آموزش و آگاه‌سازی است. تصمیم سرمایه‌گذاری بر عهده شماست.",
+      madeWith: "ساخته‌شده با",
+      poweredBy: "نیرومند با هوش مصنوعی Z.ai",
+      copyright: "© ۲۰۲۶ دیده‌بان بازار جهانی",
+    },
+
+    // Auth
+    auth: {
+      login: "ورود",
+      register: "ثبت‌نام",
+      logout: "خروج",
+      email: "ایمیل",
+      password: "رمز عبور",
+      name: "نام",
+      loginSuccess: "ورود موفقیت‌آمیز بود",
+      registerSuccess: "ثبت‌نام موفقیت‌آمیز بود",
+      invalidCredentials: "ایمیل یا رمز اشتباه است",
+      emailExists: "این ایمیل قبلاً ثبت شده",
+      welcome: "خوش آمدید",
+    },
+  },
+
+  en: {
+    brand: "Global Market Watch",
+    tagline: "Daily analysis of world news and economic-political indicators",
+
+    nav: {
+      dashboard: "Dashboard",
+      news: "News",
+      indicators: "Indicators",
+      signals: "Signals",
+      calendar: "Calendar",
+      bookmarks: "Bookmarks",
+    },
+
+    common: {
+      loading: "Loading...",
+      refresh: "Refresh",
+      save: "Save",
+      cancel: "Cancel",
+      delete: "Delete",
+      edit: "Edit",
+      close: "Close",
+      view: "View",
+      today: "Today",
+      yesterday: "Yesterday",
+      live: "Live",
+      updated: "Updated",
+      search: "Search",
+      noData: "No data available",
+      source: "Source",
+      sources: "Sources",
+      seeAll: "See all",
+      lastUpdate: "Last update",
+    },
+
+    hero: {
+      title: "Smart Global Market Analysis",
+      subtitle: "Daily news, economic indicators, and entry/exit points for gold (XAU/USD)",
+      cta: "Start daily analysis",
+      ctaSecondary: "How to use",
+    },
+
+    dashboard: {
+      dailyBrief: "Daily Brief",
+      dailyBriefDesc: "AI analysis of the day's most important events",
+      marketMovers: "Market Movers",
+      marketMoversDesc: "Factors affecting short-term gold volatility",
+      sentiment: "Market Sentiment",
+      sentimentBullish: "Bullish",
+      sentimentBearish: "Bearish",
+      sentimentNeutral: "Neutral",
+      volatility: "Expected Volatility",
+      risk: "Event Risk",
+      high: "High",
+      medium: "Medium",
+      low: "Low",
+    },
+
+    news: {
+      title: "Daily News",
+      fed: "Federal Reserve",
+      war: "War News",
+      politics: "Politics",
+      economy: "Economy",
+      crisis: "Crisis",
+      all: "All",
+      relatedArticles: "Related articles",
+      impact: "Impact on gold",
+      positive: "Positive",
+      negative: "Negative",
+      neutral: "Neutral",
+      aiSummary: "AI summary",
+    },
+
+    indicators: {
+      title: "Economic Indicators",
+      titleDesc: "Key macro variables affecting gold and dollar",
+      interestRate: "Fed Interest Rate",
+      interestRateDesc: "US federal funds rate ceiling",
+      dxy: "Dollar Index (DXY)",
+      dxyDesc: "Dollar strength vs. major currency basket",
+      inflation: "CPI Inflation",
+      inflationDesc: "US consumer price inflation",
+      treasury10y: "10-Year Treasury Yield",
+      treasury10yDesc: "US 10-year government bond yield",
+      goldPrice: "Gold Price",
+      goldPriceDesc: "World gold ounce price (XAU/USD)",
+      centralBank: "Central Bank Activity",
+      centralBankDesc: "Gold buying/selling by central banks",
+      economicStats: "Economic Statistics",
+      economicStatsDesc: "US GDP, employment, industrial output",
+      yield10y: "10Y Yield",
+      current: "Current",
+      previous: "Previous",
+      forecast: "Forecast",
+      change: "Change",
+    },
+
+    signals: {
+      title: "Trading Signals",
+      titleDesc: "Suggested entry and exit points for XAU/USD",
+      entryPoint: "Entry",
+      exitPoint: "Exit",
+      stopLoss: "Stop Loss",
+      takeProfit: "Take Profit",
+      direction: "Direction",
+      long: "Long",
+      short: "Short",
+      neutral: "No position",
+      confidence: "Confidence",
+      basis: "Basis",
+      timeframe: "Timeframe",
+      shortTerm: "Short-term",
+      midTerm: "Mid-term",
+      longTerm: "Long-term",
+      disclaimer: "Disclaimer: This analysis is educational and not investment advice.",
+    },
+
+    calendar: {
+      title: "US Economic Calendar",
+      titleDesc: "Upcoming US economic events",
+      date: "Date",
+      time: "Time",
+      event: "Event",
+      importance: "Importance",
+      actual: "Actual",
+      forecast: "Forecast",
+      previous: "Previous",
+      next: "Next",
+      today: "Today",
+      thisWeek: "This week",
+    },
+
+    gauge: {
+      bullish: "Bullish",
+      bearish: "Bearish",
+      neutral: "Neutral",
+      extreme: "Extreme",
+    },
+
+    footer: {
+      disclaimer: "This platform is for educational purposes only. Investment decisions are yours.",
+      madeWith: "Made with",
+      poweredBy: "Powered by Z.ai AI",
+      copyright: "© 2026 Global Market Watch",
+    },
+
+    auth: {
+      login: "Login",
+      register: "Register",
+      logout: "Logout",
+      email: "Email",
+      password: "Password",
+      name: "Name",
+      loginSuccess: "Login successful",
+      registerSuccess: "Registration successful",
+      invalidCredentials: "Invalid email or password",
+      emailExists: "Email already registered",
+      welcome: "Welcome",
+    },
+  },
+} as const;
+
+export type Dict = typeof translations.fa;
+
+// Persian digits conversion
+export function toPersianDigits(input: string | number): string {
+  const map = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
+  return String(input).replace(/[0-9]/g, (d) => map[Number(d)]);
+}
+
+// Format number for display in current language
+export function localizeNumber(value: number | string, lang: Lang, decimals = 2): string {
+  const num = typeof value === "number" ? value : parseFloat(value);
+  if (Number.isNaN(num)) return String(value);
+  const formatted = num.toLocaleString(lang === "fa" ? "fa-IR" : "en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+  return formatted;
+}

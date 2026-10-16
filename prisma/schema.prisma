@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  alerts  Alert[]
+  bookmarks Bookmark[]
+}
+
+model AnalysisCache {
+  id        String   @id @default(cuid())
+  date      String   // YYYY-MM-DD
+  type      String   // 'daily_brief' | 'fed_news' | 'war_news' | 'indicators' | 'signals' | 'calendar'
+  payload   String   // JSON string
+  createdAt DateTime @default(now())
+
+  @@unique([date, type])
+  @@index([date])
+}
+
+model Alert {
+  id        String   @id @default(cuid())
+  userId    String
+  symbol    String   // e.g. XAU/USD, DXY, US10Y
+  condition String   // 'above' | 'below' | 'change_pct'
+  threshold String
+  note      String?
+  active    Boolean  @default(true)
+  triggered Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, active])
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  url       String?
+  category  String   // 'news' | 'indicator' | 'signal'
+  note      String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
