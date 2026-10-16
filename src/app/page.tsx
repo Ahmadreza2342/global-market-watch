@@ -15,6 +15,8 @@ import { MiniChartCard } from "@/components/mini-chart-card";
 import { TradersPanel } from "@/components/traders-panel";
 import { MultiTfPanel } from "@/components/multi-tf-panel";
 import { LiveAlertsWidget } from "@/components/live-alerts-widget";
+import { TelegramSettingsPanel } from "@/components/telegram-settings-panel";
+import { AlertsContainer } from "@/components/alerts-container";
 import { DailyBrief, MarketIndicators, NewsItem, TradingSignal, CalendarEvent } from "@/lib/market";
 import { TopTrader, MultiTfSignal } from "@/lib/mt5";
 
@@ -160,8 +162,8 @@ function Dashboard() {
               />
             </div>
 
-            {/* Live alerts widget (top-priority) */}
-            <LiveAlertsWidget threshold={75} pollIntervalMs={45000} />
+            {/* Live alerts widget + Telegram settings (top-priority) */}
+            <AlertsContainer threshold={75} pollIntervalMs={45000} />
 
             {/* Multi-timeframe signals (the user's main feature) */}
             <MultiTfPanel
@@ -246,7 +248,7 @@ function Dashboard() {
 
       {view === "signals" && (
         <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6">
-          <LiveAlertsWidget threshold={75} pollIntervalMs={45000} />
+          <AlertsContainer threshold={75} pollIntervalMs={45000} />
           <MultiTfPanel signals={multiTf} loading={multiTfLoading} cached={multiTfMeta.cached} generatedAt={multiTfMeta.generatedAt} onRefresh={() => fetchMultiTf(true)} />
           <SignalsPanel signals={signals} loading={sigLoading} cached={sigMeta.cached} generatedAt={sigMeta.generatedAt} onRefresh={() => fetchSignals(true)} />
         </main>
@@ -260,7 +262,7 @@ function Dashboard() {
 
       {view === "multiTf" && (
         <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6">
-          <LiveAlertsWidget threshold={75} pollIntervalMs={45000} />
+          <AlertsContainer threshold={75} pollIntervalMs={45000} />
           <MultiTfPanel signals={multiTf} loading={multiTfLoading} cached={multiTfMeta.cached} generatedAt={multiTfMeta.generatedAt} onRefresh={() => fetchMultiTf(true)} />
         </main>
       )}

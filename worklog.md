@@ -128,3 +128,59 @@ Stage Summary:
   - Cached responses served fast; fresh responses handled gracefully
 - Tech: Next.js 16 + Prisma + ZAI SDK (web search + LLM) + Notification API + Web Audio API
 - Lint clean (0 errors)
+
+---
+Task ID: enhancement-telegram
+Agent: main (Z.ai GLM)
+Task: Add Telegram bot integration so strong signals are auto-sent to user's Telegram chat.
+
+Work Log:
+- Extended i18n dictionary (fa/en) with `telegram` section (~25 strings):
+  - title/titleDesc, enable/disable, botToken/chatId + placeholders, save/test/testSuccess/testFailed
+  - getBotToken, getChatId, enableHint, messagePrefix, buySignal/sellSignal
+  - connected/disconnected, helpTitle + 5 setup steps
+- Created `lib/telegram.ts`:
+  - `loadTelegramConfig()` / `saveTelegramConfig()` — localStorage-backed (key: gmw_telegram_config)
+  - `buildTelegramMessage()` — formats alert as HTML with emoji + bold tags, symbol/tf/dir/strength/entry/TP/SL/reason/time
+  - `sendSignalToTelegram()` — POST to /api/telegram/send with bot token + chat ID + HTML text
+- New API routes:
+  - POST `/api/telegram/send` — server-side proxy to https://api.telegram.org/bot<token>/sendMessage
+    - Validates bot token format (regex `/^\d+:[A-Za-z0-9_-]{30,}$/`)
+    - Accepts botToken, chatId, text, parseMode
+    - Forwards to Telegram, returns {ok, messageId} or {ok:false, error, message}
+  - POST `/api/telegram/test` — sends a styled HTML test message to verify bot/chat config
+- Created `TelegramSettingsPanel` UI component:
+  - Toggle switch (enable/disable Telegram)
+  - Bot Token input (type=password)
+  - Chat ID input
+  - Save Settings button (persists to localStorage)
+  - Test Send button (calls /api/telegram/test)
+  - Status badge: "Connected" (green) / "Disabled" (gray)
+  - Collapsible 5-step setup guide with @BotFather and @userinfobot links
+  - Hint box explaining the ≥75 strength auto-send behavior
+- Created `AlertsContainer` wrapper — grid layout showing LiveAlertsWidget + TelegramSettingsPanel side-by-side on desktop
+- Modified `LiveAlertsWidget.showAlert()` to auto-call `sendSignalToTelegram()` when:
+  - Browser notification fires
+  - Sound plays
+  - In-app toast shows
+  - THEN if Telegram is enabled + configured, posts the alert to Telegram
+  - Subtle toast confirms: "✈️ Telegram — XAU/USD 1h → <chatId>"
+- Updated `Hero` with 6th feature card: "Telegram Delivery / ارسال به تلگرام"
+- Updated `page.tsx` to use `AlertsContainer` in dashboard, signals, and multiTf views
+
+Stage Summary:
+- Verified via Agent Browser:
+  - Telegram settings panel renders correctly in both FA and EN
+  - Toggle switch works
+  - Token input is type=password (masked)
+  - Help collapsible expands to show 5 setup steps + bot links
+  - Test Send button is initially disabled, becomes enabled after entering token+chatId
+  - Test send with invalid token → clear Persian error: "ارسال ناموفق: Bot token format looks invalid"
+  - Server log confirms POST /api/telegram/test returned 400 (validation working)
+  - All other endpoints (signal-history, traders, multi-tf-signals, etc.) still return 200
+- Workflow: user enters Bot Token + Chat ID → toggles Telegram on → every strong signal (≥75 strength) now triggers:
+  1. Browser notification
+  2. 2-tone beep (880Hz + 1320Hz)
+  3. In-app toast
+  4. **NEW**: Telegram message with full signal details (symbol, timeframe, direction, strength, entry/TP/SL, reasoning)
+- Lint clean (0 errors)

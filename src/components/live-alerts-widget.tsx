@@ -8,6 +8,7 @@ import { Bell, BellOff, Volume2, VolumeX, Trash2, AlertTriangle, BellRing, TestT
 import { useApp } from "@/components/app-provider";
 import { toast } from "sonner";
 import { localizeNumber, toPersianDigits } from "@/lib/i18n";
+import { sendSignalToTelegram, loadTelegramConfig } from "@/lib/telegram";
 
 interface TriggeredAlert {
   id: string;
@@ -94,7 +95,7 @@ export function LiveAlertsWidget({ pollIntervalMs = 60000, threshold = 75 }: Liv
     }
   }, [soundOn]);
 
-  const showAlert = useCallback((alert: TriggeredAlert) => {
+  const showAlert = useCallback(async (alert: TriggeredAlert) => {
     const title = alert.direction === "long" ? `🟢 ${t.liveAlerts.strongBuySignal}` : alert.direction === "short" ? `🔴 ${t.liveAlerts.strongSellSignal}` : t.liveAlerts.newSignal;
     const body = `${alert.symbol} ${alert.timeframe.toUpperCase()} — ${t.liveAlerts.strengthLabel}: ${alert.strength}\n${t.signals.entryPoint}: ${alert.entry}\n${t.signals.takeProfit}: ${alert.takeProfit}\n${t.signals.stopLoss}: ${alert.stopLoss}`;
     // Browser notification
@@ -120,7 +121,26 @@ export function LiveAlertsWidget({ pollIntervalMs = 60000, threshold = 75 }: Liv
     });
     // Beep
     playBeep();
-  }, [enabled, playBeep, t.common.view, t.liveAlerts.newSignal, t.liveAlerts.strongBuySignal, t.liveAlerts.strongSellSignal, t.liveAlerts.strengthLabel, t.signals.entryPoint, t.signals.takeProfit, t.signals.stopLoss]);
+
+    // Telegram auto-send (no UI feedback — fire-and-forget, but log on error)
+    try {
+      const cfg = loadTelegramConfig();
+      if (cfg.enabled && cfg.botToken && cfg.chatId) {
+        const result = await sendSignalToTelegram(alert, lang);
+        if (!result.ok && result.error) {
+          console.warn("[Telegram] send failed:", result.error);
+        } else if (result.ok) {
+          // Subtle toast confirming Telegram delivery
+          toast.success(`✈️ ${t.telegram.title}`, {
+            description: `${alert.symbol} ${alert.timeframe.toUpperCase()} → ${cfg.chatId}`,
+            duration: 3000,
+          });
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [enabled, lang, playBeep, t.common.view, t.liveAlerts.newSignal, t.liveAlerts.strongBuySignal, t.liveAlerts.strongSellSignal, t.liveAlerts.strengthLabel, t.signals.entryPoint, t.signals.takeProfit, t.signals.stopLoss, t.telegram.title]);
 
   // Poll for new strong signals
   useEffect(() => {

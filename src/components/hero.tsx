@@ -2,7 +2,7 @@
 
 import { useApp } from "@/components/app-provider";
 import { Button } from "@/components/ui/button";
-import { Sparkles, ArrowLeft, ArrowRight, Activity, Globe, LineChart, Target } from "lucide-react";
+import { Sparkles, ArrowLeft, ArrowRight, Activity, Globe, LineChart, Target, Send } from "lucide-react";
 
 interface HeroProps {
   onStart: () => void;
@@ -18,7 +18,7 @@ export function Hero({ onStart }: HeroProps) {
     { icon: Target, title: lang === "fa" ? "چند تایم‌فریم" : "Multi-Timeframe", desc: lang === "fa" ? "سیگنال ۱۵ دقیقه و ۱ ساعته برای طلا و نفت" : "15m & 1h signals for gold and crude oil" },
     { icon: LineChart, title: lang === "fa" ? "تریدرهای برتر" : "Top Traders", desc: lang === "fa" ? "۱۰ تریدر برتر MQL5 با اکانت واقعی و ۱+ سال فعالیت" : "Top 10 MQL5 traders with real accounts, 1+ year" },
     { icon: Activity, title: lang === "fa" ? "هشدار زنده" : "Live Alerts", desc: lang === "fa" ? "نوتیفیکیشن مرورگر + صدا برای سیگنال‌های قوی" : "Browser notifications + sound for strong signals" },
-    { icon: Target, title: lang === "fa" ? "نقاط ورود/خروج" : "Entry/Exit Points", desc: lang === "fa" ? "نقاط هوشمند ورود با حد سود/ضرر" : "Smart entry points with TP/SL" },
+    { icon: Send, title: lang === "fa" ? "ارسال به تلگرام" : "Telegram Delivery", desc: lang === "fa" ? "ارسال خودکار سیگنال‌های قوی به تلگرام" : "Auto-send strong signals to your Telegram chat" },
   ];
 
   return (
