@@ -1,4 +1,28 @@
 import { webSearch, analyzeJSON, analyzeText } from "./zai";
+import { callGeminiJSON, isGeminiConfigured } from "./gemini";
+import { fetchQuotes, type PriceQuote } from "./yahoo";
+import { fetchRssNews, categorizeNews, quickSentiment, type RssNewsItem } from "./rss-news";
+
+// LLM helper: tries Z.AI SDK first, then falls back to Google Gemini
+async function analyzeJSONWithFallback<T = unknown>(
+  systemPrompt: string,
+  userPrompt: string
+): Promise<T | null> {
+  try {
+    const result = await analyzeJSON<T>(systemPrompt, userPrompt);
+    if (result) return result;
+  } catch (e) {
+    console.error("[Z.AI LLM] error:", e);
+  }
+  if (isGeminiConfigured()) {
+    try {
+      return await callGeminiJSON<T>(systemPrompt, userPrompt);
+    } catch (e) {
+      console.error("[Gemini LLM] error:", e);
+    }
+  }
+  return null;
+}
 
 export interface NewsItem {
   title: string;
@@ -87,16 +111,31 @@ function illustrativeNews(): NewsItem[] {
 }
 
 export async function fetchDailyNews(): Promise<NewsItem[]> {
-  const items: NewsItem[] = [];
+  // Step 1: Try RSS feeds first (real news, no API key needed)
+  const rssItems = await fetchRssNews(15);
+  const items: NewsItem[] = rssItems.map((r) => ({
+    title: r.title,
+    url: r.link,
+    snippet: r.description,
+    source: r.source,
+    publishedAt: r.pubDate,
+    category: categorizeNews(r.title),
+    impact: quickSentiment(r.title, r.description),
+    summary: r.description.slice(0, 200),
+  }));
+
+  // Step 2: Also try Z.AI web search for additional items (works in sandbox)
   const settled = await Promise.allSettled(
     NEWS_QUERIES.map(async ({ category, q, days }) => {
-      const results = await webSearch(q, 6, days);
+      const results = await webSearch(q, 4, days);
       return { category, results };
     })
   );
   for (const r of settled) {
     if (r.status !== "fulfilled") continue;
     for (const item of r.value.results) {
+      // Skip if title already exists
+      if (items.some((existing) => existing.title === item.title)) continue;
       items.push({
         title: item.title,
         url: item.url,
@@ -104,14 +143,14 @@ export async function fetchDailyNews(): Promise<NewsItem[]> {
         source: item.source,
         publishedAt: item.publishedAt,
         category: r.value.category,
-        impact: "neutral" as const,
-        summary: item.snippet,
+        impact: "neutral",
+        summary: item.snippet.slice(0, 200),
       });
     }
   }
 
   if (items.length === 0) {
-    // Web search unavailable (e.g., on external deployments) — use illustrative fallback
+    // All sources failed — use illustrative fallback
     return illustrativeNews();
   }
 
@@ -132,7 +171,7 @@ Return only a JSON array of objects with the same length as input items, ordered
   const userPrompt = JSON.stringify(sample, null, 2);
 
   try {
-    const analysis = await analyzeJSON<Array<{ i: number; impact: "positive" | "negative" | "neutral"; summary: string }>>(
+    const analysis = await analyzeJSONWithFallback<Array<{ i: number; impact: "positive" | "negative" | "neutral"; summary: string }>>(
       systemPrompt,
       userPrompt
     );
@@ -201,7 +240,7 @@ Return STRICT JSON only (no markdown) with this shape:
 Bullish = favorable for gold. Bearish = unfavorable. Use English only.`;
   const userPrompt = `Today's top world market headlines:\n${titles.join("\n")}`;
 
-  const result = await analyzeJSON<DailyBrief>(systemPrompt, userPrompt);
+  const result = await analyzeJSONWithFallback<DailyBrief>(systemPrompt, userPrompt);
   if (!result) {
     // LLM unavailable — compute sentiment locally from news impacts
     const bullPoints = news.filter((n) => n.impact === "positive").slice(0, 2).map((n) => n.title);
@@ -255,11 +294,44 @@ export interface IndicatorRow {
 }
 
 export async function fetchMarketIndicators(): Promise<MarketIndicators> {
-  // Use parallel web searches for the latest readings
+  // Step 1: Fetch real-time prices from Yahoo Finance (free, no key)
+  const yahooQuotes = await fetchQuotes(["XAU/USD", "WTI/USD", "DXY", "US10Y"]);
+
+  const map: Partial<Record<string, IndicatorRow>> = {};
+
+  // Helper to convert Yahoo quote to IndicatorRow
+  const yahooToRow = (label: string, unit: string | undefined, quote: PriceQuote | null): IndicatorRow => {
+    if (!quote) {
+      return {
+        label,
+        value: "—",
+        unit,
+        change: "0",
+        changeType: "flat",
+        updatedAt: new Date().toISOString(),
+        note: "Live data temporarily unavailable",
+      };
+    }
+    const changeType: "up" | "down" | "flat" = quote.changePercent > 0.05 ? "up" : quote.changePercent < -0.05 ? "down" : "flat";
+    return {
+      label,
+      value: quote.price.toFixed(2),
+      unit,
+      previous: quote.previousClose.toFixed(2),
+      change: `${quote.changePercent >= 0 ? "+" : ""}${quote.changePercent.toFixed(2)}%`,
+      changeType,
+      note: `Live from ${quote.exchangeName} — ${quote.currency}`,
+      updatedAt: quote.fetchedAt,
+    };
+  };
+
+  // Use Yahoo quotes for gold, oil, DXY, 10Y yield
+  map.goldPrice = yahooToRow("Gold (XAU/USD)", "$/oz", yahooQuotes["XAU/USD"]);
+  map.dxy = yahooToRow("Dollar Index", "", yahooQuotes["DXY"]);
+  map.treasury10y = yahooToRow("10Y Treasury Yield", "%", yahooQuotes["US10Y"]);
+
+  // Step 2: Use parallel web searches for the macro indicators (Fed rate, CPI, etc.)
   const queries = [
-    { key: "goldPrice" as const, q: "gold price today XAU USD spot per ounce", label: "Gold (XAU/USD)", unit: "$/oz", days: 2 },
-    { key: "dxy" as const, q: "US dollar index DXY value today", label: "Dollar Index", days: 2 },
-    { key: "treasury10y" as const, q: "US 10 year treasury yield today", label: "10Y Treasury Yield", unit: "%", days: 2 },
     { key: "interestRate" as const, q: "Federal Reserve current federal funds rate 2026", label: "Fed Funds Rate", unit: "%", days: 14 },
     { key: "inflation" as const, q: "US CPI inflation latest reading 2026", label: "US CPI Inflation", unit: "%", days: 30 },
     { key: "centralBank" as const, q: "central bank gold buying 2026 reserves", label: "Central Bank Gold Demand", days: 30 },
@@ -274,7 +346,6 @@ export async function fetchMarketIndicators(): Promise<MarketIndicators> {
     })
   );
 
-  const map: Partial<Record<string, IndicatorRow>> = {};
   for (const r of settled) {
     if (r.status !== "fulfilled") continue;
     map[r.value.key] = r.value.row;
@@ -346,7 +417,7 @@ async function extractIndicatorFromSearch(
 Return STRICT JSON only: {"value":"<current value with unit>","previous":"<previous value if known>","forecast":"<forecast if known>","change":"<signed percentage or absolute change>","note":"<short one-sentence note>","updatedAt":"<ISO date if known, else empty>"}`;
   const userPrompt = JSON.stringify(results.slice(0, 5), null, 2);
 
-  const data = await analyzeJSON<{
+  const data = await analyzeJSONWithFallback<{
     value: string;
     previous?: string;
     forecast?: string;
@@ -417,7 +488,7 @@ Use English only. Be conservative and risk-aware. If signals conflict, prefer ne
     trend: indicators.trendNote,
   }, null, 2)}\n\nDaily brief:\n${JSON.stringify({ sentiment: brief.sentiment, confidence: brief.confidence, volatility: brief.volatility, action: brief.recommendedAction }, null, 2)}`;
 
-  const result = await analyzeJSON<TradingSignal[]>(systemPrompt, userPrompt);
+  const result = await analyzeJSONWithFallback<TradingSignal[]>(systemPrompt, userPrompt);
   if (!result || !Array.isArray(result)) {
     return [
       {
@@ -469,7 +540,7 @@ Return STRICT JSON array:
 Use English only. Focus on market-moving events.`;
   const userPrompt = JSON.stringify(results.slice(0, 6), null, 2);
 
-  const data = await analyzeJSON<CalendarEvent[]>(systemPrompt, userPrompt);
+  const data = await analyzeJSONWithFallback<CalendarEvent[]>(systemPrompt, userPrompt);
   if (!data) return [];
   return data.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 }

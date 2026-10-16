@@ -1,10 +1,33 @@
 import { webSearch, analyzeJSON } from "./zai";
+import { callGeminiJSON, isGeminiConfigured } from "./gemini";
+import { fetchOHLC } from "./yahoo";
 import {
   computeIndicators,
   aggregateTechnical,
   type IndicatorSnapshot,
   type TechnicalScore,
 } from "./indicators";
+
+// LLM helper: tries Z.AI SDK first, then falls back to Google Gemini
+async function analyzeJSONWithFallback<T = unknown>(
+  systemPrompt: string,
+  userPrompt: string
+): Promise<T | null> {
+  try {
+    const result = await analyzeJSON<T>(systemPrompt, userPrompt);
+    if (result) return result;
+  } catch (e) {
+    console.error("[Z.AI LLM] error:", e);
+  }
+  if (isGeminiConfigured()) {
+    try {
+      return await callGeminiJSON<T>(systemPrompt, userPrompt);
+    } catch (e) {
+      console.error("[Gemini LLM] error:", e);
+    }
+  }
+  return null;
+}
 
 // ---------- Top Traders ----------
 
@@ -80,7 +103,7 @@ Return STRICT JSON only (no markdown) — an array of 10 objects:
 If exact data isn't available, infer reasonable values based on the search results. Use English.`;
 
   const userPrompt = JSON.stringify(combined.slice(0, 12), null, 2);
-  const data = await analyzeJSON<Omit<TopTrader, "rank" | "accountType">[]>(
+  const data = await analyzeJSONWithFallback<Omit<TopTrader, "rank" | "accountType">[]>(
     systemPrompt,
     userPrompt
   );
@@ -316,8 +339,35 @@ export interface MultiTfSignal {
   generatedAt: string;
 }
 
+// Fetch real OHLC from Yahoo Finance, fall back to synthesis if unavailable
+async function fetchOHLCForSignal(symbol: Symbol, tf: Timeframe): Promise<{ closes: number[]; highs: number[]; lows: number[] }> {
+  // Map timeframe to Yahoo interval/range
+  const tfConfig: Record<Timeframe, { interval: "15m" | "1h" | "1d"; range: "1d" | "5d" | "1mo" }> = {
+    "15m": { interval: "15m", range: "1d" },
+    "1h": { interval: "1h", range: "5d" },
+    "1d": { interval: "1d", range: "1mo" },
+  };
+  const cfg = tfConfig[tf];
+
+  try {
+    const ohlc = await fetchOHLC(symbol, cfg.range, cfg.interval);
+    if (ohlc.length >= 10) {
+      return {
+        closes: ohlc.map((c) => c.close),
+        highs: ohlc.map((c) => c.high),
+        lows: ohlc.map((c) => c.low),
+      };
+    }
+  } catch (err) {
+    console.error(`[fetchOHLCForSignal ${symbol} ${tf}] error:`, err);
+  }
+
+  // Fallback: synthesize realistic-looking OHLC
+  return synthesizeOHLC(symbol, tf);
+}
+
 // Generate a deterministic but realistic-looking OHLC series for a given symbol/timeframe.
-// In production, replace with real MT5 history via the MetaTrader5 Python library or a price API.
+// Used as fallback when Yahoo Finance is unavailable.
 function synthesizeOHLC(symbol: Symbol, tf: Timeframe): { closes: number[]; highs: number[]; lows: number[] } {
   const basePrice = symbol === "XAU/USD" ? 2300 : 78; // gold ~2300, WTI ~78
   const candlesPerTf: Record<Timeframe, number> = { "15m": 96, "1h": 72, "1d": 60 };
@@ -365,7 +415,7 @@ async function fetchNewsBias(symbol: Symbol): Promise<{ direction: "long" | "sho
     const systemPrompt = `You are a macro analyst. Based on the search results, determine the news-driven bias for ${symbol} over the next few hours.
 Return STRICT JSON: {"direction":"long|short|neutral","score":<0-100>}
 Long = bullish for the symbol. Use English.`;
-    const data = await analyzeJSON<{ direction: "long" | "short" | "neutral"; score: number }>(
+    const data = await analyzeJSONWithFallback<{ direction: "long" | "short" | "neutral"; score: number }>(
       systemPrompt,
       JSON.stringify(results.slice(0, 4), null, 2)
     );
@@ -427,7 +477,7 @@ export async function generateMultiTfSignals(
 
   for (const symbol of symbols) {
     for (const tf of timeframes) {
-      const { closes, highs, lows } = synthesizeOHLC(symbol, tf);
+      const { closes, highs, lows } = await fetchOHLCForSignal(symbol, tf);
       const indicators = computeIndicators(closes);
       const technical = aggregateTechnical(indicators);
       const news = newsBiasMap[symbol];
