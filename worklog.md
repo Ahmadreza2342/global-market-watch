@@ -184,3 +184,30 @@ Stage Summary:
   3. In-app toast
   4. **NEW**: Telegram message with full signal details (symbol, timeframe, direction, strength, entry/TP/SL, reasoning)
 - Lint clean (0 errors)
+
+---
+Task ID: github-push
+Agent: main (Z.ai GLM)
+Task: Push project files to user's GitHub account.
+
+Work Log:
+- Updated `.gitignore` to exclude: `.zscripts/`, `agent-ctx/`, `upload/`, `download/`, `db/`, `*.db`, `scripts/*.png`, OS files
+- Created comprehensive `README.md` (English + Persian) with features list, tech stack, project structure, setup instructions, Telegram setup, disclaimers
+- Created `.env.example` with safe placeholder values
+- Identified sensitive files previously committed in old commits: `.env`, `db/custom.db`, `.zscripts/dev.pid`
+- Used `git rm --cached` to untrack sensitive files in working tree
+- Created cleanup commit "Clean up: remove sensitive files from repo" with detailed message
+- Used `git filter-branch --force --index-filter` to rewrite all history (5 commits) and purge sensitive files from every commit
+- Created new GitHub repo via API: `Ahmadreza2342/global-market-watch` (public, with issues enabled)
+- Pushed cleaned history with force-push: `ca37c23...d2a4a7c main -> main (forced update)`
+- Removed token from `origin` remote URL via `git remote set-url` (now uses clean HTTPS URL)
+- Verified via GitHub API that `.env` and `db/custom.db` return 404 in HEAD and all historical commits
+- Added `scripts/push-to-github.sh` helper script for future pushes (does NOT store token)
+- Reiterated to user the importance of revoking the exposed token
+
+Stage Summary:
+- Repository live at: https://github.com/Ahmadreza2342/global-market-watch
+- 5 commits pushed (history rewritten, all sensitive files purged)
+- Verified sensitive files NOT accessible via API in any commit
+- Remote URL is clean (no embedded token)
+- User warned that the token was exposed in chat history and should be revoked + regenerated
