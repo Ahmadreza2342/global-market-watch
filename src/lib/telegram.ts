@@ -124,3 +124,40 @@ export async function sendSignalToTelegram(
     return { ok: false, error: String(err) };
   }
 }
+
+// ============ SERVER-SIDE: Telegram Bot API direct call ============
+
+export async function sendTelegramMessageDirect(
+  botToken: string,
+  chatId: string,
+  text: string,
+  parseMode: "HTML" | "Markdown" = "HTML"
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        parse_mode: parseMode,
+        disable_web_page_preview: "true",
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      return { ok: false, error: `Telegram API ${res.status}: ${errText.slice(0, 200)}` };
+    }
+
+    const data = await res.json();
+    if (data.ok !== true) {
+      return { ok: false, error: data?.description || "Unknown Telegram error" };
+    }
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: String(err) };
+  }
+}

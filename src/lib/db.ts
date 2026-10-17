@@ -61,10 +61,26 @@ CREATE TABLE IF NOT EXISTS "SignalHistory" (
   "stopLoss" TEXT,
   "source" TEXT NOT NULL,
   "reason" TEXT,
+  "telegramSent" BOOLEAN NOT NULL DEFAULT 0,
+  "telegramSentAt" DATETIME,
   "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS "SignalHistory_symbol_timeframe_createdAt_idx" ON "SignalHistory"("symbol", "timeframe", "createdAt");
 CREATE INDEX IF NOT EXISTS "SignalHistory_createdAt_idx" ON "SignalHistory"("createdAt");
+CREATE INDEX IF NOT EXISTS "SignalHistory_telegramSent_idx" ON "SignalHistory"("telegramSent");
+
+CREATE TABLE IF NOT EXISTS "TelegramSubscriber" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "botToken" TEXT NOT NULL,
+  "chatId" TEXT NOT NULL,
+  "label" TEXT,
+  "enabled" BOOLEAN NOT NULL DEFAULT 1,
+  "threshold" INTEGER NOT NULL DEFAULT 75,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL,
+  "lastSentAt" DATETIME
+);
+CREATE INDEX IF NOT EXISTS "TelegramSubscriber_enabled_threshold_idx" ON "TelegramSubscriber"("enabled", "threshold");
 
 CREATE TABLE IF NOT EXISTS "Bookmark" (
   "id" TEXT NOT NULL PRIMARY KEY,

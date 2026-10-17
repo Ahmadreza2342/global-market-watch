@@ -63,10 +63,28 @@ model SignalHistory {
   stopLoss  String?
   source    String   // 'technical' | 'news' | 'traders' | 'composite'
   reason    String?
+  telegramSent    Boolean  @default(false)
+  telegramSentAt  DateTime?
   createdAt DateTime @default(now())
 
   @@index([symbol, timeframe, createdAt])
   @@index([createdAt])
+  @@index([telegramSent])
+}
+
+// Telegram subscribers (for cron-based auto-sending when user is offline)
+model TelegramSubscriber {
+  id           String   @id @default(cuid())
+  botToken     String   // Encrypted in production; plaintext here for simplicity
+  chatId       String
+  label        String?  // Optional name (e.g., "Ahmad's iPhone")
+  enabled      Boolean  @default(true)
+  threshold    Int      @default(75)  // Minimum strength to send
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  lastSentAt   DateTime?
+
+  @@index([enabled, threshold])
 }
 
 model Bookmark {

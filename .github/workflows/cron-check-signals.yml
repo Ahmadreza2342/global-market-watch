@@ -1,0 +1,43 @@
+name: Hourly Signal Checker
+
+# This workflow runs hourly and pings our Vercel endpoint to:
+# 1. Fetch fresh news from RSS feeds
+# 2. Run multi-TF signal analysis (with Gemini LLM)
+# 3. Send strong signals (>=75 strength) to Telegram subscribers
+#
+# Why GitHub Actions? Vercel Hobby plan only supports daily cron jobs.
+# GitHub Actions is free (2000 min/month for private repos, unlimited for public)
+# and supports any cron schedule.
+
+on:
+  schedule:
+    # Run every hour at minute 0
+    # Times are in UTC. Tehran is UTC+3:30
+    - cron: "0 * * * *"
+  workflow_dispatch: # Allow manual triggering from GitHub UI
+
+permissions:
+  contents: read
+
+jobs:
+  check-signals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Trigger Vercel Cron Endpoint
+        run: |
+          echo "Triggering signal check at $(date)"
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}\n" \
+            -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Accept: application/json" \
+            --max-time 120 \
+            "${{ secrets.APP_URL }}/api/cron/check-signals")
+          echo "Response: $RESPONSE"
+          HTTP_CODE=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Signal check completed successfully"
+          else
+            echo "❌ Signal check failed with HTTP $HTTP_CODE"
+            exit 1
+          fi

@@ -27,28 +27,62 @@ import {
 } from "@/lib/telegram";
 
 export function TelegramSettingsPanel() {
-  const { t } = useApp();
+  const { t, lang } = useApp();
   const [config, setConfig] = useState<TelegramConfig>(() => loadTelegramConfig());
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
 
-  const handleToggle = (checked: boolean) => {
+  // (handleToggle moved below — see new version)
+
+  const handleSave = async () => {
+    setSaving(true);
+    saveTelegramConfig(config);
+    // Also save to server-side DB for cron-based notifications
+    try {
+      await fetch("/api/telegram/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          botToken: config.botToken,
+          chatId: config.chatId,
+          enabled: config.enabled,
+          threshold: 75,
+          label: "My Telegram",
+        }),
+      });
+    } catch (e) {
+      console.warn("Failed to save subscriber server-side:", e);
+    }
+    setTimeout(() => {
+      setSaving(false);
+      toast.success(t.telegram.saved + (config.enabled ? " ✅ " + (lang === "fa" ? "الان به‌صورت خودکار هم سیگنال می‌گیری" : "Auto-sending enabled") : ""));
+    }, 400);
+  };
+
+  // When toggling enabled state, also update server
+  const handleToggle = async (checked: boolean) => {
     const next = { ...config, enabled: checked };
     setConfig(next);
     saveTelegramConfig(next);
-    if (checked) {
-      toast.success(t.telegram.title + " " + t.telegram.connected);
+    try {
+      await fetch("/api/telegram/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          botToken: config.botToken,
+          chatId: config.chatId,
+          enabled: checked,
+          threshold: 75,
+          label: "My Telegram",
+        }),
+      });
+    } catch (e) {
+      console.warn("Failed to update subscriber:", e);
     }
-  };
-
-  const handleSave = () => {
-    setSaving(true);
-    saveTelegramConfig(config);
-    setTimeout(() => {
-      setSaving(false);
-      toast.success(t.telegram.saved);
-    }, 400);
+    if (checked) {
+      toast.success(t.telegram.title + " " + t.telegram.connected + " ✈️");
+    }
   };
 
   const handleTest = async () => {
@@ -155,6 +189,17 @@ export function TelegramSettingsPanel() {
           <AlertCircle className="h-3.5 w-3.5 text-sky-500 shrink-0 mt-0.5" />
           <p className="text-[11px] text-muted-foreground leading-relaxed">{t.telegram.enableHint}</p>
         </div>
+
+        {isConnected && (
+          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-2.5 flex items-start gap-2">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              {lang === "fa"
+                ? "✅ شما ثبت شدید. سرور هر ساعت اخبار رو تحلیل می‌کنه و در صورت داشتن سیگنال قوی، به تلگرامت می‌فرسته — حتی وقتی آنلاین نیستی."
+                : "✅ You're subscribed. Server checks every hour for strong signals and sends them to your Telegram — even when you're offline."}
+            </p>
+          </div>
+        )}
 
         <Collapsible open={helpOpen} onOpenChange={setHelpOpen}>
           <CollapsibleTrigger asChild>
