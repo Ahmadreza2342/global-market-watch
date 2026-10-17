@@ -1,27 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, ensureDbInitialized } from "@/lib/db";
-import { fetchTopTraders, generateMultiTfSignals } from "@/lib/mt5";
-import { fetchDailyNews, generateDailyBrief, fetchMarketIndicators, generateTradingSignals } from "@/lib/market";
+import { fetchTopTraders, generateMultiTfSignals, type MultiTfSignal } from "@/lib/mt5";
 import { sendTelegramMessageDirect, buildTelegramMessage } from "@/lib/telegram";
 import { getCached, setCached, todayKey } from "@/lib/cache";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-// Vercel Cron Job — runs hourly
-// 1. Fetch fresh news from RSS + (Z.AI web search if available)
-// 2. Fetch Yahoo Finance prices
-// 3. Generate multi-TF signals
-// 4. For any signal with strength >= subscriber's threshold:
-//    - Save to SignalHistory (if not duplicate)
-//    - Send to all matching Telegram subscribers
+// Vercel Cron Job — runs hourly via GitHub Actions
+// Lightweight version: uses cached daily data (news/brief/indicators/traders)
+// Only generates fresh multi-TF signals and checks for strong ones to send
 
 export async function GET(req: NextRequest) {
-  // Verify authorization (Vercel Cron sends ?secret=... or uses Authorization header)
   const authHeader = req.headers.get("authorization");
   const querySecret = req.nextUrl.searchParams.get("secret");
   const cronSecret = process.env.CRON_SECRET;
-
   const authorized = !cronSecret || authHeader === `Bearer ${cronSecret}` || querySecret === cronSecret;
   if (!authorized) {
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
@@ -29,73 +22,75 @@ export async function GET(req: NextRequest) {
 
   const startedAt = new Date().toISOString();
   const log: string[] = [];
-  log.push(`[${startedAt}] Cron job started`);
+  log.push(`[${startedAt}] Cron started`);
 
   try {
     await ensureDbInitialized();
 
-    // Step 1: Fetch fresh news + daily brief (cached for 1 hour)
-    log.push("Step 1: Fetching daily news + brief");
-    let brief;
-    let news;
-    const cachedBrief = await getCached<{ brief: typeof brief; news: typeof news }>(todayKey(), "daily_brief");
-    if (cachedBrief) {
-      brief = cachedBrief.brief;
-      news = cachedBrief.news;
-      log.push(`  - Using cached brief (${news?.length || 0} news items)`);
-    } else {
-      news = await fetchDailyNews();
-      brief = await generateDailyBrief(news);
-      await setCached(todayKey(), "daily_brief", { brief, news, generatedAt: startedAt });
-      log.push(`  - Fetched fresh brief: "${brief?.title}" (${news.length} news items)`);
-    }
-
-    // Step 2: Fetch market indicators (cached)
-    log.push("Step 2: Fetching market indicators");
-    let indicators;
-    const cachedInd = await getCached<{ indicators: typeof indicators }>(todayKey(), "indicators");
-    if (cachedInd) {
-      indicators = cachedInd.indicators;
-      log.push(`  - Using cached indicators`);
-    } else {
-      indicators = await fetchMarketIndicators();
-      await setCached(todayKey(), "indicators", { indicators, generatedAt: startedAt });
-      log.push(`  - Fetched fresh indicators (gold: ${indicators?.goldPrice?.value})`);
-    }
-
-    // Step 3: Fetch top traders (cached)
-    let traders;
-    const cachedTraders = await getCached<{ traders: typeof traders }>(todayKey(), "traders");
-    if (cachedTraders) {
-      traders = cachedTraders.traders;
-      log.push("Step 3: Using cached traders");
-    } else {
+    // Step 1: Get cached traders (no fresh fetch)
+    log.push("Step 1: Loading traders from cache");
+    const cachedTraders = await getCached<{ traders: Awaited<ReturnType<typeof fetchTopTraders>> }>(todayKey(), "traders");
+    let traders = cachedTraders?.traders;
+    if (!traders) {
+      // Fallback: fetch fresh (shouldn't happen during normal operation)
       traders = await fetchTopTraders();
       await setCached(todayKey(), "traders", { traders, generatedAt: startedAt });
-      log.push(`Step 3: Fetched ${traders.length} traders`);
+    }
+    log.push(`  - ${traders.length} traders loaded`);
+
+    // Step 2: Generate fresh multi-TF signals (this is the main work)
+    log.push("Step 2: Generating multi-TF signals");
+    const signals: MultiTfSignal[] = await generateMultiTfSignals(traders);
+    log.push(`  - Generated ${signals.length} signals`);
+
+    // Show what we got
+    for (const s of signals) {
+      log.push(`    ${s.symbol} ${s.timeframe}: ${s.direction} strength=${s.strength}`);
     }
 
-    // Step 4: Generate multi-TF signals (force fresh)
-    log.push("Step 4: Generating multi-TF signals");
-    const signals = await generateMultiTfSignals(traders || []);
+    // Step 3: Find strong signals (>=70)
     const strongSignals = signals.filter((s) => s.strength >= 70 && s.direction !== "neutral");
-    log.push(`  - Generated ${signals.length} signals, ${strongSignals.length} strong (>=70)`);
+    log.push(`Step 3: ${strongSignals.length} strong signals (>=70)`);
 
-    // Step 5: For each strong signal, check duplicates & send to Telegram subscribers
-    log.push("Step 5: Processing strong signals + sending to Telegram");
+    if (strongSignals.length === 0) {
+      log.push("✅ No strong signals today");
+      return NextResponse.json({
+        ok: true,
+        startedAt,
+        finishedAt: new Date().toISOString(),
+        signalsGenerated: signals.length,
+        strongSignals: 0,
+        signalsSent: 0,
+        log,
+      });
+    }
 
-    // Get all enabled subscribers
+    // Step 4: Get subscribers
     const subscribers = await db.telegramSubscriber.findMany({
       where: { enabled: true },
     });
-    log.push(`  - ${subscribers.length} Telegram subscribers`);
+    log.push(`Step 4: ${subscribers.length} subscribers`);
 
+    if (subscribers.length === 0) {
+      log.push("  No subscribers — exiting");
+      return NextResponse.json({
+        ok: true,
+        startedAt,
+        signalsGenerated: signals.length,
+        strongSignals: strongSignals.length,
+        signalsSent: 0,
+        log,
+      });
+    }
+
+    // Step 5: For each strong signal, dedupe + send
+    log.push("Step 5: Processing strong signals");
     let sentCount = 0;
     let duplicateCount = 0;
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
     for (const signal of strongSignals) {
-      // Deduplication: skip if a similar signal was sent in last 2 hours
-      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+      // Deduplication
       const recentDup = await db.signalHistory.findFirst({
         where: {
           symbol: signal.symbol,
@@ -108,7 +103,7 @@ export async function GET(req: NextRequest) {
 
       if (recentDup) {
         duplicateCount++;
-        log.push(`  - SKIPPED duplicate ${signal.symbol} ${signal.timeframe} ${signal.direction} (already sent at ${recentDup.createdAt.toISOString()})`);
+        log.push(`  - SKIPPED duplicate ${signal.symbol} ${signal.timeframe} (sent at ${recentDup.createdAt.toISOString()})`);
         continue;
       }
 
@@ -130,11 +125,10 @@ export async function GET(req: NextRequest) {
       // Send to subscribers whose threshold is met
       const matchingSubs = subscribers.filter((s) => signal.strength >= s.threshold);
       if (matchingSubs.length === 0) {
-        log.push(`  - ${signal.symbol} ${signal.timeframe} strength=${signal.strength} (no matching subscribers)`);
+        log.push(`  - ${signal.symbol} ${signal.timeframe} strength=${signal.strength} (no matching subs)`);
         continue;
       }
 
-      // Build the alert payload
       const alertData = {
         id: saved.id,
         symbol: signal.symbol,
@@ -149,13 +143,12 @@ export async function GET(req: NextRequest) {
       };
 
       const message = buildTelegramMessage(alertData, "fa");
-
       let successCount = 0;
+
       for (const sub of matchingSubs) {
         const result = await sendTelegramMessageDirect(sub.botToken, sub.chatId, message, "HTML");
         if (result.ok) {
           successCount++;
-          // Update lastSentAt
           await db.telegramSubscriber.update({
             where: { id: sub.id },
             data: { lastSentAt: new Date() },
@@ -166,9 +159,8 @@ export async function GET(req: NextRequest) {
       }
 
       sentCount++;
-      log.push(`  - SENT ${signal.symbol} ${signal.timeframe} strength=${signal.strength} to ${successCount}/${matchingSubs.length} subscribers`);
+      log.push(`  - SENT ${signal.symbol} ${signal.timeframe} strength=${signal.strength} to ${successCount}/${matchingSubs.length} subs`);
 
-      // Mark as sent
       if (successCount > 0) {
         await db.signalHistory.update({
           where: { id: saved.id },
@@ -177,14 +169,12 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    log.push(`✅ Done. Sent ${sentCount} new signals, skipped ${duplicateCount} duplicates.`);
+    log.push(`✅ Done. Sent ${sentCount}, skipped ${duplicateCount} dupes.`);
 
     return NextResponse.json({
       ok: true,
       startedAt,
       finishedAt: new Date().toISOString(),
-      newsCount: news?.length || 0,
-      briefTitle: brief?.title,
       signalsGenerated: signals.length,
       strongSignals: strongSignals.length,
       signalsSent: sentCount,
@@ -195,12 +185,7 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     console.error("[/api/cron/check-signals] error:", err);
     return NextResponse.json(
-      {
-        ok: false,
-        startedAt,
-        error: String(err),
-        log,
-      },
+      { ok: false, startedAt, error: String(err), log },
       { status: 500 }
     );
   }
