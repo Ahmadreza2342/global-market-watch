@@ -17,10 +17,12 @@ import { MultiTfPanel } from "@/components/multi-tf-panel";
 import { LiveAlertsWidget } from "@/components/live-alerts-widget";
 import { TelegramSettingsPanel } from "@/components/telegram-settings-panel";
 import { AlertsContainer } from "@/components/alerts-container";
+import { ChatPanel } from "@/components/chat-panel";
+import { PerformancePanel } from "@/components/performance-panel";
 import { DailyBrief, MarketIndicators, NewsItem, TradingSignal, CalendarEvent } from "@/lib/market";
 import { TopTrader, MultiTfSignal } from "@/lib/mt5";
 
-type ViewKey = "dashboard" | "news" | "indicators" | "signals" | "traders" | "multiTf" | "calendar";
+type ViewKey = "dashboard" | "news" | "indicators" | "signals" | "traders" | "multiTf" | "calendar" | "chat" | "performance";
 
 interface BriefResponse { brief: DailyBrief; news: NewsItem[]; generatedAt: string; cached: boolean; }
 interface IndicatorsResponse { indicators: MarketIndicators; generatedAt: string; cached: boolean; }
@@ -225,6 +227,12 @@ function Dashboard() {
               generatedAt={briefMeta.generatedAt}
               onRefresh={() => fetchBrief(true)}
             />
+
+            {/* Chat with Aurum (AI assistant) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <ChatPanel />
+              <PerformancePanel />
+            </div>
           </main>
         </>
       )}
@@ -270,6 +278,22 @@ function Dashboard() {
       {view === "calendar" && (
         <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
           <CalendarPanel events={events} loading={calLoading} cached={calMeta.cached} generatedAt={calMeta.generatedAt} onRefresh={() => fetchCalendar(true)} />
+        </main>
+      )}
+
+      {view === "chat" && (
+        <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+          <div className="max-w-3xl mx-auto">
+            <ChatPanel />
+          </div>
+        </main>
+      )}
+
+      {view === "performance" && (
+        <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+          <div className="max-w-4xl mx-auto">
+            <PerformancePanel />
+          </div>
         </main>
       )}
 

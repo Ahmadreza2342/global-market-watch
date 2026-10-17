@@ -82,6 +82,18 @@ CREATE TABLE IF NOT EXISTS "TelegramSubscriber" (
 );
 CREATE INDEX IF NOT EXISTS "TelegramSubscriber_enabled_threshold_idx" ON "TelegramSubscriber"("enabled", "threshold");
 
+CREATE TABLE IF NOT EXISTS "EvaluationLog" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "signalId" TEXT NOT NULL,
+  "outcome" TEXT NOT NULL,
+  "currentPrice" TEXT NOT NULL,
+  "evaluatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS "EvaluationLog_signalId_idx" ON "EvaluationLog"("signalId");
+CREATE INDEX IF NOT EXISTS "EvaluationLog_outcome_idx" ON "EvaluationLog"("outcome");
+CREATE INDEX IF NOT EXISTS "EvaluationLog_evaluatedAt_idx" ON "EvaluationLog"("evaluatedAt");
+
 CREATE TABLE IF NOT EXISTS "Bookmark" (
   "id" TEXT NOT NULL PRIMARY KEY,
   "userId" TEXT NOT NULL,

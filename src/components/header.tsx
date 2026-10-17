@@ -24,7 +24,9 @@ export function Header({ active, onNavigate }: HeaderProps) {
 
   const navItems = [
     { key: "dashboard", label: t.nav.dashboard },
+    { key: "chat", label: t.nav.chat, icon: "🪙" },
     { key: "signals", label: t.nav.signals },
+    { key: "performance", label: t.nav.performance },
     { key: "multiTf", label: t.nav.multiTf },
     { key: "traders", label: t.nav.traders },
     { key: "news", label: t.nav.news },
@@ -63,8 +65,9 @@ export function Header({ active, onNavigate }: HeaderProps) {
                 variant={active === item.key ? "secondary" : "ghost"}
                 size="sm"
                 onClick={() => onNavigate(item.key)}
-                className="text-xs lg:text-sm"
+                className="text-xs lg:text-sm gap-1"
               >
+                {"icon" in item && item.icon && <span>{item.icon}</span>}
                 {item.label}
               </Button>
             ))}
@@ -128,8 +131,9 @@ export function Header({ active, onNavigate }: HeaderProps) {
               variant={active === item.key ? "secondary" : "ghost"}
               size="sm"
               onClick={() => onNavigate(item.key)}
-              className="text-xs whitespace-nowrap"
+              className="text-xs whitespace-nowrap gap-1"
             >
+              {"icon" in item && item.icon && <span>{item.icon}</span>}
               {item.label}
             </Button>
           ))}

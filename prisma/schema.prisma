@@ -87,6 +87,20 @@ model TelegramSubscriber {
   @@index([enabled, threshold])
 }
 
+// Backtest evaluations — track win/loss outcomes of past signals
+model EvaluationLog {
+  id           String   @id @default(cuid())
+  signalId     String   // References SignalHistory.id
+  outcome      String   // 'win' | 'loss' | 'open'
+  currentPrice String   // Price at time of evaluation
+  evaluatedAt  DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  @@index([signalId])
+  @@index([outcome])
+  @@index([evaluatedAt])
+}
+
 model Bookmark {
   id        String   @id @default(cuid())
   userId    String

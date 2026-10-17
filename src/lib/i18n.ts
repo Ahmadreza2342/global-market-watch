@@ -17,6 +17,8 @@ export const translations = {
       traders: "تریدرها",
       multiTf: "چند تایم‌فریم",
       calendar: "تقویم",
+      chat: "چت با آروم",
+      performance: "عملکرد",
       bookmarks: "نشان‌ها",
     },
 
@@ -311,6 +313,8 @@ export const translations = {
       traders: "Traders",
       multiTf: "Multi-TF",
       calendar: "Calendar",
+      chat: "Ask Aurum",
+      performance: "Performance",
       bookmarks: "Bookmarks",
     },
 
