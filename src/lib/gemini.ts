@@ -2,7 +2,7 @@
 // Get your free API key at: https://aistudio.google.com/app/apikey
 // Set as GEMINI_API_KEY env var on Vercel
 
-const GEMINI_MODEL = "gemini-1.5-flash-latest";
+const GEMINI_MODEL = "gemini-flash-lite-latest";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 export async function callGemini(

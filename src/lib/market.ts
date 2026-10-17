@@ -154,36 +154,40 @@ export async function fetchDailyNews(): Promise<NewsItem[]> {
     return illustrativeNews();
   }
 
-  // Use LLM to classify sentiment impact and summarize
-  const sample = items.slice(0, 15).map((it, i) => ({
-    i,
-    title: it.title,
-    snippet: it.snippet.slice(0, 280),
-  }));
+  // Use LLM to classify sentiment impact and summarize (only top 5 items to keep response fast)
+  // Skip LLM classification if RSS quickSentiment already classified most items
+  const itemsNeedingLLM = items.filter((it) => it.impact === "neutral").slice(0, 5);
+  if (itemsNeedingLLM.length > 0 && isGeminiConfigured()) {
+    const sample = itemsNeedingLLM.map((it, i) => ({
+      i: items.indexOf(it),
+      title: it.title,
+      snippet: it.snippet.slice(0, 200),
+    }));
 
-  const systemPrompt = `You are a senior macro analyst focused on how global news affects gold (XAU/USD) and the US dollar.
-For each news item, output a JSON object: {"impact": "positive|negative|neutral", "summary": "<short one-sentence summary in English>"}.
-- "positive" means likely bullish for gold (safe-haven inflows, dovish Fed, geopolitical risk, weaker dollar, lower real yields).
-- "negative" means likely bearish for gold (hawkish Fed, strong dollar, risk-on, higher real yields).
-- "neutral" means mixed or unclear.
-Return only a JSON array of objects with the same length as input items, ordered by the "i" index.`;
+    const systemPrompt = `You are a senior macro analyst focused on how global news affects gold (XAU/USD) and the US dollar.
+For each news item, output a JSON object: {"i": <index>, "impact": "positive|negative|neutral", "summary": "<short one-sentence summary>"}.
+- "positive" = bullish for gold (safe-haven, dovish Fed, geopolitical risk, weaker dollar).
+- "negative" = bearish for gold (hawkish Fed, strong dollar, risk-on, higher real yields).
+- "neutral" = mixed or unclear.
+Return only a JSON array.`;
 
-  const userPrompt = JSON.stringify(sample, null, 2);
+    const userPrompt = JSON.stringify(sample, null, 2);
 
-  try {
-    const analysis = await analyzeJSONWithFallback<Array<{ i: number; impact: "positive" | "negative" | "neutral"; summary: string }>>(
-      systemPrompt,
-      userPrompt
-    );
-    if (Array.isArray(analysis)) {
-      for (const a of analysis) {
-        if (typeof a.i !== "number" || !items[a.i]) continue;
-        items[a.i].impact = a.impact;
-        if (a.summary) items[a.i].summary = a.summary;
+    try {
+      const analysis = await analyzeJSONWithFallback<Array<{ i: number; impact: "positive" | "negative" | "neutral"; summary: string }>>(
+        systemPrompt,
+        userPrompt
+      );
+      if (Array.isArray(analysis)) {
+        for (const a of analysis) {
+          if (typeof a.i !== "number" || !items[a.i]) continue;
+          items[a.i].impact = a.impact;
+          if (a.summary) items[a.i].summary = a.summary;
+        }
       }
+    } catch (e) {
+      console.error("[fetchDailyNews] LLM analysis failed:", e);
     }
-  } catch (e) {
-    console.error("[fetchDailyNews] LLM analysis failed:", e);
   }
 
   return items;
