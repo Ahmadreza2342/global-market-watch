@@ -110,8 +110,8 @@ export function InstallButton() {
             </DialogTitle>
             <DialogDescription>
               {lang === "fa"
-                ? "برای نصب اپ دیده‌بان بازار جهانی در گوشی خود، مراحل زیر را دنبال کنید:"
-                : "To install Global Market Watch on your phone, follow these steps:"}
+                ? "برای نصب اپ دیدبان طلا در گوشی خود، مراحل زیر را دنبال کنید:"
+                : "To install Gold Sentinel on your phone, follow these steps:"}
             </DialogDescription>
           </DialogHeader>
 

@@ -2,7 +2,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   appId: "com.globalmarketwatch.app",
-  appName: "Global Market Watch",
+  appName: "Gold Sentinel",
   webDir: "out", // We'll use Next.js static export
   server: {
     // Use the deployed Vercel URL as the backend for native app

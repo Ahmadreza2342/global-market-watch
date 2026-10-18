@@ -5,8 +5,8 @@ export type Lang = "fa" | "en";
 export const translations = {
   fa: {
     // Brand
-    brand: "دیده‌بان بازار جهانی",
-    tagline: "تحلیل روزانه اخبار و شاخص‌های اقتصادی-سیاسی جهان",
+    brand: "دیدبان طلا",
+    tagline: "تحلیل روزانه‌ی بازار طلا با هوش مصنوعی — اخبار، شاخص‌ها، و سیگنال‌های معاملاتی",
 
     // Navigation
     nav: {
@@ -161,7 +161,7 @@ export const translations = {
       disclaimer: "این پلتفرم صرفاً جهت آموزش و آگاه‌سازی است. تصمیم سرمایه‌گذاری بر عهده شماست.",
       madeWith: "ساخته‌شده با",
       poweredBy: "نیرومند با هوش مصنوعی Z.ai",
-      copyright: "© ۲۰۲۶ دیده‌بان بازار جهانی",
+      copyright: "© ۲۰۲۶ دیدبان طلا",
     },
 
     // Auth
@@ -302,8 +302,8 @@ export const translations = {
   },
 
   en: {
-    brand: "Global Market Watch",
-    tagline: "Daily analysis of world news and economic-political indicators",
+    brand: "Gold Sentinel",
+    tagline: "Daily AI-powered analysis of gold market — news, indicators, and trading signals",
 
     nav: {
       dashboard: "Dashboard",
@@ -448,7 +448,7 @@ export const translations = {
       disclaimer: "This platform is for educational purposes only. Investment decisions are yours.",
       madeWith: "Made with",
       poweredBy: "Powered by Z.ai AI",
-      copyright: "© 2026 Global Market Watch",
+      copyright: "© 2026 Gold Sentinel",
     },
 
     auth: {

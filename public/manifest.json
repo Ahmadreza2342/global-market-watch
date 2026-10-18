@@ -1,7 +1,7 @@
 {
-  "name": "دیده‌بان بازار جهانی - Global Market Watch",
-  "short_name": "Market Watch",
-  "description": "تحلیل روزانه اخبار و شاخص‌های اقتصادی-سیاسی جهان با تمرکز بر طلا و نفت",
+  "name": "دیدبان طلا - Gold Sentinel",
+  "short_name": "Gold Sentinel",
+  "description": "تحلیل روزانه‌ی بازار طلا با هوش مصنوعی — اخبار، شاخص‌ها، و سیگنال‌های معاملاتی",
   "lang": "fa",
   "dir": "rtl",
   "start_url": "/",

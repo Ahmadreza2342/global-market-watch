@@ -1,6 +1,6 @@
 # 📱 راهنمای کامل آپلود در Google Play Store
 
-این راهنما قدم‌به‌قدم برات توضیح می‌ده چطور اپ «دیده‌بان بازار جهانی» رو در Google Play Store منتشر کنی.
+این راهنما قدم‌به‌قدم برات توضیح می‌ده چطور اپ «دیدبان طلا» رو در Google Play Store منتشر کنی.
 
 ---
 
@@ -87,7 +87,7 @@ https://global-market-watch-ahmadreza13798886-1259.vercel.app
 
 | فیلد | مقدار |
 |------|-------|
-| **App name** | `Global Market Watch` |
+| **App name** | `Gold Sentinel` |
 | **Default language** | `Persian (fa)` (یا `English` اگه می‌خوای) |
 | **App type** | `App` (نه Game) |
 | **Pricing** | `Free` |
@@ -121,14 +121,14 @@ https://global-market-watch-ahmadreza13798886-1259.vercel.app
 
 | فیلد | مقدار |
 |------|-------|
-| **App name** | `Global Market Watch — دیده‌بان بازار جهانی` |
+| **App name** | `Gold Sentinel — دیدبان طلا` |
 | **Short description** | `تحلیل روزانه‌ی طلا و نفت با هوش مصنوعی — اخبار، شاخص‌ها، سیگنال` |
 | **Full description** | (متن زیر رو کپی کن) |
 
 ### Full Description (کپی کن)
 
 ```
-دیده‌بان بازار جهانی — پلتفرم تحلیل روزانه‌ی بازار با هوش مصنوعی
+دیدبان طلا — پلتفرم تحلیل روزانه‌ی بازار با هوش مصنوعی
 
 این اپ به شما کمک می‌کند تا با تحلیل هوش مصنوعی، اخبار روزانه و شاخص‌های اقتصادی، تصمیمات بهتری در بازار طلا (XAU/USD) و نفت (WTI/USD) بگیرید.
 

@@ -66,7 +66,7 @@ export function buildTelegramMessage(alert: SignalAlertData, lang: Lang): string
       ? lang === "fa" ? "فروش" : "SELL"
       : lang === "fa" ? "خنثی" : "NEUTRAL";
 
-  const brand = lang === "fa" ? "دیده‌بان بازار جهانی" : "Global Market Watch";
+  const brand = lang === "fa" ? "دیدبان طلا" : "Gold Sentinel";
   const labels = lang === "fa"
     ? { symbol: "نماد", tf: "تایم‌فریم", dir: "جهت", str: "قدرت", entry: "نقطه ورود", tp: "حد سود", sl: "حد ضرر", reason: "دلیل", time: "زمان" }
     : { symbol: "Symbol", tf: "Timeframe", dir: "Direction", str: "Strength", entry: "Entry", tp: "Take Profit", sl: "Stop Loss", reason: "Reason", time: "Time" };

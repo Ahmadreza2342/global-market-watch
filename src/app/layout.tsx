@@ -16,16 +16,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "دیده‌بان بازار جهانی | Global Market Watch",
-  description: "تحلیل روزانه اخبار و شاخص‌های اقتصادی-سیاسی جهان برای طلا (XAU/USD) و نفت (WTI/USD)",
-  keywords: ["gold", "XAU/USD", "WTI", "crude oil", "market analysis", "fed", "dollar index", "treasury yield", "طلا", "نفت", "تحلیل بازار", "متاتریدر", "MetaTrader"],
-  authors: [{ name: "Global Market Watch" }],
-  applicationName: "Global Market Watch",
+  title: "دیدبان طلا | Gold Sentinel",
+  description: "تحلیل روزانه‌ی بازار طلا با هوش مصنوعی — اخبار، شاخص‌های اقتصادی، و سیگنال‌های معاملاتی برای طلا (XAU/USD) و نفت (WTI/USD)",
+  keywords: ["gold", "XAU/USD", "WTI", "crude oil", "market analysis", "fed", "dollar index", "treasury yield", "طلا", "نفت", "تحلیل بازار", "متاتریدر", "MetaTrader", "دیدبان طلا"],
+  authors: [{ name: "Gold Sentinel" }],
+  applicationName: "Gold Sentinel",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Market Watch",
+    title: "Gold Sentinel",
     startupImage: ["/icon-512.png"],
   },
   icons: {
@@ -38,15 +38,15 @@ export const metadata: Metadata = {
     shortcut: ["/icon.svg"],
   },
   openGraph: {
-    title: "Global Market Watch — دیده‌بان بازار جهانی",
-    description: "Daily analysis of world news and economic indicators affecting gold (XAU/USD) and crude oil (WTI/USD)",
+    title: "Gold Sentinel — دیدبان طلا",
+    description: "Daily AI-powered analysis of gold market — news, indicators, and trading signals for XAU/USD and WTI/USD",
     type: "website",
-    images: [{ url: "/icon-512.png", width: 512, height: 512, alt: "Global Market Watch" }],
+    images: [{ url: "/icon-512.png", width: 512, height: 512, alt: "Gold Sentinel" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Global Market Watch",
-    description: "Daily analysis of world news, indicators, and trading signals for gold and crude oil",
+    title: "Gold Sentinel — دیدبان طلا",
+    description: "Daily AI-powered analysis of gold, crude oil, and economic indicators",
     images: ["/icon-512.png"],
   },
 };
@@ -74,7 +74,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Market Watch" />
+        <meta name="apple-mobile-web-app-title" content="Gold Sentinel" />
         <meta name="format-detection" content="telephone=no" />
       </head>
       <body
