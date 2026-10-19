@@ -1,20 +1,54 @@
 import { PrismaClient } from '@prisma/client'
+import { PrismaLibSQL } from '@prisma/adapter-libsql'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
   __dbInitialized?: boolean
 }
 
-export const db =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+function createPrismaClient(): PrismaClient {
+  const dbUrl = process.env.DATABASE_URL || 'file:/tmp/custom.db'
+
+  // If using libsql:// (Turso), use the libsql adapter
+  if (dbUrl.startsWith('libsql://') || dbUrl.startsWith('libsql+ws://')) {
+    try {
+      // Parse authToken from URL query string if present
+      const urlObj = new URL(dbUrl)
+      const authToken = urlObj.searchParams.get('authToken') || process.env.DATABASE_AUTH_TOKEN
+      urlObj.searchParams.delete('authToken')
+      const cleanUrl = urlObj.toString().replace(/\/$/, '')
+
+      console.log('[db] Using libsql adapter. cleanUrl:', cleanUrl.slice(0, 60), 'hasAuth:', !!authToken)
+
+      // PrismaLibSQL is a FACTORY that takes a config object (not a libsql client)
+      // It internally creates the libsql client
+      const adapter = new PrismaLibSQL({
+        url: cleanUrl,
+        authToken: authToken || undefined,
+      })
+      const client = new PrismaClient({
+        adapter,
+        log: process.env.NODE_ENV === 'production' ? ['error'] : ['query', 'error', 'warn'],
+      })
+      console.log('[db] Prisma client created with libsql adapter')
+      return client
+    } catch (err) {
+      console.error('[db] Failed to create libsql adapter:', err)
+    }
+  }
+
+  // Default: SQLite local file
+  console.log('[db] Using default SQLite (no adapter)')
+  return new PrismaClient({
     log: process.env.NODE_ENV === 'production' ? ['error'] : ['query'],
   })
+}
+
+export const db = globalForPrisma.prisma ?? createPrismaClient()
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
 
-// Ensure SQLite tables exist on cold start (Vercel serverless ephemeral /tmp)
-// Tables that are NOT user-dependent (auth removed — no User, Alert, Bookmark tables)
+// SQL schema for ensuring tables exist on cold start
 const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS "AnalysisCache" (
   "id" TEXT NOT NULL PRIMARY KEY,
@@ -69,39 +103,35 @@ CREATE TABLE IF NOT EXISTS "EvaluationLog" (
 CREATE INDEX IF NOT EXISTS "EvaluationLog_signalId_idx" ON "EvaluationLog"("signalId");
 CREATE INDEX IF NOT EXISTS "EvaluationLog_outcome_idx" ON "EvaluationLog"("outcome");
 CREATE INDEX IF NOT EXISTS "EvaluationLog_evaluatedAt_idx" ON "EvaluationLog"("evaluatedAt");
+`
 
-CREATE TABLE IF NOT EXISTS "_prisma_migrations" (
-  "id" TEXT NOT NULL PRIMARY KEY,
-  "checksum" TEXT NOT NULL,
-  "finished_at" DATETIME,
-  "migration_name" TEXT NOT NULL,
-  "logs" TEXT,
-  "rolled_back_at" DATETIME,
-  "started_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "applied_steps_count" INTEGER NOT NULL DEFAULT 0
-);
-`;
-
-let initPromise: Promise<void> | null = null;
+let initPromise: Promise<void> | null = null
 
 export async function ensureDbInitialized(): Promise<void> {
-  if (globalForPrisma.__dbInitialized) return;
-  if (initPromise) return initPromise;
+  if (globalForPrisma.__dbInitialized) return
+  if (initPromise) return initPromise
 
   initPromise = (async () => {
     try {
-      // Split into individual statements and execute
-      const statements = SCHEMA_SQL.split(';').map((s) => s.trim()).filter((s) => s.length > 0);
-      for (const stmt of statements) {
-        await db.$executeRawUnsafe(stmt);
+      // Skip SQL initialization for libsql/Turso (tables created via scripts/turso-push-schema.ts)
+      const dbUrl = process.env.DATABASE_URL || 'file:/tmp/custom.db'
+      if (dbUrl.startsWith('libsql://') || dbUrl.startsWith('libsql+ws://')) {
+        globalForPrisma.__dbInitialized = true
+        console.log('[db] Using Turso/libsql — tables should be pre-created')
+        return
       }
-      globalForPrisma.__dbInitialized = true;
-      console.log('[db] SQLite tables initialized successfully');
-    } catch (err) {
-      console.error('[db] Failed to initialize SQLite tables:', err);
-      // Don't throw — let individual queries fail with proper error messages
-    }
-  })();
 
-  return initPromise;
+      // For local SQLite, create tables
+      const statements = SCHEMA_SQL.split(';').map((s) => s.trim()).filter((s) => s.length > 0)
+      for (const stmt of statements) {
+        await db.$executeRawUnsafe(stmt)
+      }
+      globalForPrisma.__dbInitialized = true
+      console.log('[db] SQLite tables initialized successfully')
+    } catch (err) {
+      console.error('[db] Failed to initialize tables:', err)
+    }
+  })()
+
+  return initPromise
 }
