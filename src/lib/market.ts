@@ -279,6 +279,7 @@ export interface MarketIndicators {
   inflation: IndicatorRow;
   treasury10y: IndicatorRow;
   goldPrice: IndicatorRow;
+  oilPrice: IndicatorRow;
   centralBank: IndicatorRow;
   economicStats: IndicatorRow;
   trend: "up" | "down" | "flat";
@@ -331,6 +332,7 @@ export async function fetchMarketIndicators(): Promise<MarketIndicators> {
 
   // Use Yahoo quotes for gold, oil, DXY, 10Y yield
   map.goldPrice = yahooToRow("Gold (XAU/USD)", "$/oz", yahooQuotes["XAU/USD"]);
+  map.oilPrice = yahooToRow("Crude Oil (WTI)", "$/bbl", yahooQuotes["WTI/USD"]);
   map.dxy = yahooToRow("Dollar Index", "", yahooQuotes["DXY"]);
   map.treasury10y = yahooToRow("10Y Treasury Yield", "%", yahooQuotes["US10Y"]);
 
@@ -371,6 +373,7 @@ export async function fetchMarketIndicators(): Promise<MarketIndicators> {
     inflation: map.inflation ?? fallback("US CPI Inflation", "%"),
     treasury10y: map.treasury10y ?? fallback("10Y Treasury Yield", "%"),
     goldPrice: map.goldPrice ?? fallback("Gold (XAU/USD)", "$/oz"),
+    oilPrice: map.oilPrice ?? fallback("Crude Oil (WTI)", "$/bbl"),
     centralBank: map.centralBank ?? fallback("Central Bank Gold Demand"),
     economicStats: map.economicStats ?? fallback("US GDP Growth", "%"),
     trend: "flat" as const,

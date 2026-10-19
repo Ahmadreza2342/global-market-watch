@@ -24,11 +24,11 @@ export interface OHLC {
 }
 
 const YAHOO_SYMBOLS: Record<string, string> = {
-  "XAU/USD": "GC=F",        // Gold futures
-  "WTI/USD": "CL=F",        // WTI Crude oil futures
+  "XAU/USD": "XAUUSD=X",     // Gold spot (more reliable than GC=F futures)
+  "WTI/USD": "CLUSD=X",      // WTI Crude oil spot
   "DXY": "DX-Y.NYB",        // US Dollar Index
   "US10Y": "^TNX",          // 10-Year Treasury Yield
-  "US2Y": "^IRX",           // 13-week Treasury Yield (proxy for short-term)
+  "US2Y": "^IRX",           // 13-week Treasury Yield
   "SP500": "^GSPC",         // S&P 500
   "NASDAQ": "^IXIC",        // Nasdaq Composite
   "VIX": "^VIX",            // Volatility Index
@@ -36,63 +36,73 @@ const YAHOO_SYMBOLS: Record<string, string> = {
   "ETH/USD": "ETH-USD",     // Ethereum
 };
 
+// Alternative symbols to try if primary fails
+const ALT_SYMBOLS: Record<string, string[]> = {
+  "XAU/USD": ["GC=F", "XAUUSD=X", "GOLD"],
+  "WTI/USD": ["CL=F", "CLUSD=X", "OIL"],
+  "DXY": ["DX-Y.NYB", "DX=F", "UUP"],
+  "US10Y": ["^TNX", "TNX", "10YRYLD"],
+};
+
 const USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
 export async function fetchQuote(symbol: string): Promise<PriceQuote | null> {
-  const ySymbol = YAHOO_SYMBOLS[symbol] || symbol;
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ySymbol)}?interval=1d&range=1d`;
+  // Try primary symbol + all alternative symbols
+  const symbolsToTry = [YAHOO_SYMBOLS[symbol] || symbol, ...(ALT_SYMBOLS[symbol] || [])];
+  const uniqueSymbols = [...new Set(symbolsToTry)]; // deduplicate
 
-  // Try up to 3 times with backoff
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const res = await fetch(url, {
-        headers: {
-          "User-Agent": USER_AGENT,
-          "Accept": "application/json",
-        },
-        signal: AbortSignal.timeout(10000),
-      });
+  for (const ySymbol of uniqueSymbols) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ySymbol)}?interval=1d&range=1d`;
+      try {
+        const res = await fetch(url, {
+          headers: {
+            "User-Agent": USER_AGENT,
+            "Accept": "application/json",
+          },
+          signal: AbortSignal.timeout(8000),
+        });
 
-      if (res.status === 429 || res.status === 401) {
-        // Rate limited — wait and retry
-        await new Promise((r) => setTimeout(r, 800 * (attempt + 1)));
-        continue;
-      }
+        if (res.status === 429 || res.status === 401 || res.status === 404) {
+          break; // try next symbol
+        }
 
-      if (!res.ok) {
-        if (attempt < 2) {
-          await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+        if (!res.ok) {
+          if (attempt < 1) {
+            await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
+            continue;
+          }
+          break;
+        }
+
+        const data = await res.json();
+        const result = data?.chart?.result?.[0];
+        if (!result || !result.meta?.regularMarketPrice) {
+          break; // no data, try next symbol
+        }
+
+        const meta = result.meta;
+        const quote: PriceQuote = {
+          symbol,
+          price: meta.regularMarketPrice,
+          change: meta.regularMarketPrice - (meta.chartPreviousClose || meta.previousClose || 0),
+          changePercent: meta.regularMarketChangePercent || 0,
+          previousClose: meta.chartPreviousClose || meta.previousClose || 0,
+          dayHigh: meta.regularMarketDayHigh || meta.regularMarketPrice,
+          dayLow: meta.regularMarketDayLow || meta.regularMarketPrice,
+          currency: meta.currency || "USD",
+          exchangeName: meta.exchangeName || "",
+          fetchedAt: new Date().toISOString(),
+        };
+
+        return quote;
+      } catch (err) {
+        if (attempt < 1) {
+          await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
           continue;
         }
-        return null;
+        // try next symbol
       }
-
-      const data = await res.json();
-      const result = data?.chart?.result?.[0];
-      if (!result) return null;
-
-      const meta = result.meta;
-      const quote: PriceQuote = {
-        symbol,
-        price: meta.regularMarketPrice,
-        change: meta.regularMarketPrice - (meta.chartPreviousClose || meta.previousClose || 0),
-        changePercent: meta.regularMarketChangePercent || 0,
-        previousClose: meta.chartPreviousClose || meta.previousClose || 0,
-        dayHigh: meta.regularMarketDayHigh || meta.regularMarketPrice,
-        dayLow: meta.regularMarketDayLow || meta.regularMarketPrice,
-        currency: meta.currency || "USD",
-        exchangeName: meta.exchangeName || "",
-        fetchedAt: new Date().toISOString(),
-      };
-
-      return quote;
-    } catch (err) {
-      console.error(`[fetchQuote ${symbol} attempt ${attempt + 1}] error:`, err);
-      if (attempt < 2) {
-        await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
-        continue;
-      }
-      return null;
     }
   }
 

@@ -25,7 +25,45 @@ export async function GET(req: NextRequest) {
     let traders = traderCache?.traders;
     if (!traders) traders = await fetchTopTraders();
 
-    const signals = await generateMultiTfSignals(traders || []);
+    // Get cached prices from indicators (so signals use real price even if Yahoo OHLC fails)
+    const indCache = await getCached<{ indicators: { goldPrice?: { value: string }; oilPrice?: { value: string }; } }>(hourlyKey(), "indicators");
+    const priceCache: Record<string, number> = {};
+    const goldVal = indCache?.indicators?.goldPrice?.value;
+    if (goldVal && goldVal !== "—") {
+      priceCache["XAU/USD"] = parseFloat(goldVal.replace(/[^0-9.]/g, ""));
+    }
+    const oilVal = indCache?.indicators?.oilPrice?.value;
+    if (oilVal && oilVal !== "—") {
+      priceCache["WTI/USD"] = parseFloat(oilVal.replace(/[^0-9.]/g, ""));
+    }
+
+    // If WTI price is missing from cache, try fetching it directly
+    if (!priceCache["WTI/USD"]) {
+      try {
+        const { fetchQuote } = await import("@/lib/yahoo");
+        const wtiQuote = await fetchQuote("WTI/USD");
+        if (wtiQuote && wtiQuote.price > 0) {
+          priceCache["WTI/USD"] = wtiQuote.price;
+        }
+      } catch (e) {
+        console.error("[multi-tf] Failed to fetch WTI quote directly:", e);
+      }
+    }
+
+    // If gold price is also missing, try fetching directly
+    if (!priceCache["XAU/USD"]) {
+      try {
+        const { fetchQuote } = await import("@/lib/yahoo");
+        const goldQuote = await fetchQuote("XAU/USD");
+        if (goldQuote && goldQuote.price > 0) {
+          priceCache["XAU/USD"] = goldQuote.price;
+        }
+      } catch (e) {
+        console.error("[multi-tf] Failed to fetch gold quote directly:", e);
+      }
+    }
+
+    const signals = await generateMultiTfSignals(traders || [], undefined, priceCache);
 
     // Persist strong signals to SignalHistory
     for (const s of signals) {

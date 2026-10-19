@@ -340,7 +340,7 @@ export interface MultiTfSignal {
 }
 
 // Fetch real OHLC from Yahoo Finance, fall back to synthesis if unavailable
-async function fetchOHLCForSignal(symbol: Symbol, tf: Timeframe): Promise<{ closes: number[]; highs: number[]; lows: number[] }> {
+async function fetchOHLCForSignal(symbol: Symbol, tf: Timeframe, cachedPrice?: number): Promise<{ closes: number[]; highs: number[]; lows: number[] }> {
   // Map timeframe to Yahoo interval/range
   const tfConfig: Record<Timeframe, { interval: "15m" | "1h" | "1d"; range: "1d" | "5d" | "1mo" }> = {
     "15m": { interval: "15m", range: "1d" },
@@ -362,24 +362,39 @@ async function fetchOHLCForSignal(symbol: Symbol, tf: Timeframe): Promise<{ clos
     console.error(`[fetchOHLCForSignal ${symbol} ${tf}] error:`, err);
   }
 
-  // Fallback: synthesize realistic-looking OHLC
-  return synthesizeOHLC(symbol, tf);
+  // Fallback: try to get current quote and use as base price for synthesis
+  let currentPrice: number | null = cachedPrice || null;
+  if (!currentPrice) {
+    try {
+      const { fetchQuote } = await import("./yahoo");
+      const quote = await fetchQuote(symbol);
+      if (quote && quote.price > 0) {
+        currentPrice = quote.price;
+        console.log(`[fetchOHLCForSignal ${symbol} ${tf}] Using current price ${currentPrice} as base for synthesis`);
+      }
+    } catch (e) {
+      console.error(`[fetchOHLCForSignal ${symbol}] failed to get current quote:`, e);
+    }
+  } else {
+    console.log(`[fetchOHLCForSignal ${symbol} ${tf}] Using cached price ${currentPrice} as base for synthesis`);
+  }
+
+  return synthesizeOHLC(symbol, tf, currentPrice || undefined);
 }
 
 // Generate a deterministic but realistic-looking OHLC series for a given symbol/timeframe.
 // Used as fallback when Yahoo Finance is unavailable.
-function synthesizeOHLC(symbol: Symbol, tf: Timeframe): { closes: number[]; highs: number[]; lows: number[] } {
-  const basePrice = symbol === "XAU/USD" ? 2300 : 78; // gold ~2300, WTI ~78
+// If currentPrice is provided, the LAST candle's close will be anchored to currentPrice.
+function synthesizeOHLC(symbol: Symbol, tf: Timeframe, currentPrice?: number): { closes: number[]; highs: number[]; lows: number[] } {
+  // Default base prices (2026 prices)
+  const defaultBase = symbol === "XAU/USD" ? 4180 : 99;
+  const basePrice = currentPrice || defaultBase;
   const candlesPerTf: Record<Timeframe, number> = { "15m": 96, "1h": 72, "1d": 60 };
   const n = candlesPerTf[tf];
   const volScale = symbol === "XAU/USD" ? 0.004 : 0.012; // WTI is more volatile
 
-  const closes: number[] = [];
-  const highs: number[] = [];
-  const lows: number[] = [];
-
-  // Use a deterministic seed per symbol+tf
-  const seedStr = `${symbol}-${tf}-${new Date().toISOString().slice(0, 13)}`; // changes hourly
+  // Use a deterministic seed per symbol+tf+hour so data is consistent within an hour
+  const seedStr = `${symbol}-${tf}-${new Date().toISOString().slice(0, 13)}`;
   let seed = 0;
   for (let i = 0; i < seedStr.length; i++) {
     seed = (seed * 31 + seedStr.charCodeAt(i)) | 0;
@@ -389,13 +404,24 @@ function synthesizeOHLC(symbol: Symbol, tf: Timeframe): { closes: number[]; high
     return seed / 233280;
   };
 
-  let price = basePrice;
-  // Generate a trend bias that changes throughout the day
-  const trendBias = (rand() - 0.5) * 0.001;
+  const closes: number[] = [];
+  const highs: number[] = [];
+  const lows: number[] = [];
+
+  // Generate a path that ENDS at currentPrice (if provided)
+  // Start from basePrice × (0.9-1.1) and walk to currentPrice
+  const startPrice = currentPrice
+    ? currentPrice * (0.95 + rand() * 0.1) // start within 5% of current
+    : basePrice;
+  const endPrice = currentPrice || basePrice;
+
+  // Linear interpolation from startPrice to endPrice, with noise
+  const trendBias = (endPrice - startPrice) / n;
+  let price = startPrice;
 
   for (let i = 0; i < n; i++) {
     const noise = (rand() - 0.5) * 2 * volScale * price;
-    const drift = trendBias * price;
+    const drift = trendBias;
     price = Math.max(basePrice * 0.7, Math.min(basePrice * 1.3, price + noise + drift));
     const high = price + Math.abs(rand() - 0.5) * volScale * price;
     const low = price - Math.abs(rand() - 0.5) * volScale * price;
@@ -403,6 +429,14 @@ function synthesizeOHLC(symbol: Symbol, tf: Timeframe): { closes: number[]; high
     highs.push(parseFloat(high.toFixed(2)));
     lows.push(parseFloat(low.toFixed(2)));
   }
+
+  // Anchor the last candle to currentPrice so entry/lastPrice match reality
+  if (currentPrice) {
+    closes[closes.length - 1] = parseFloat(currentPrice.toFixed(2));
+    highs[highs.length - 1] = parseFloat((currentPrice * 1.001).toFixed(2));
+    lows[lows.length - 1] = parseFloat((currentPrice * 0.999).toFixed(2));
+  }
+
   return { closes, highs, lows };
 }
 
@@ -463,7 +497,8 @@ function computeTraderBias(traders: TopTrader[], symbol: Symbol): { direction: "
 
 export async function generateMultiTfSignals(
   traders: TopTrader[],
-  newsBias?: { direction: "long" | "short" | "neutral"; score: number }[]
+  newsBias?: { direction: "long" | "short" | "neutral"; score: number }[],
+  priceCache?: Record<string, number>  // {"XAU/USD": 4172.30, "WTI/USD": 97.75}
 ): Promise<MultiTfSignal[]> {
   const symbols: Symbol[] = ["XAU/USD", "WTI/USD"];
   const timeframes: Timeframe[] = ["15m", "1h"];
@@ -477,7 +512,8 @@ export async function generateMultiTfSignals(
 
   for (const symbol of symbols) {
     for (const tf of timeframes) {
-      const { closes, highs, lows } = await fetchOHLCForSignal(symbol, tf);
+      // Pass cached price as fallback so synthesis uses real price
+      const { closes, highs, lows } = await fetchOHLCForSignal(symbol, tf, priceCache?.[symbol]);
       const indicators = computeIndicators(closes);
       const technical = aggregateTechnical(indicators);
       const news = newsBiasMap[symbol];
