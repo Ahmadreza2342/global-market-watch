@@ -1,8 +1,9 @@
 import { db, ensureDbInitialized } from "./db";
 
-const CACHE_TTL_MINUTES = 15; // Cache valid for 15 minutes, then refreshed
+const CACHE_TTL_MINUTES = 15; // Default cache valid for 15 minutes, then refreshed
+const SHORT_CACHE_TTL_SECONDS = 10; // For real-time data (indicators, signals)
 
-export async function getCached<T>(date: string, type: string): Promise<T | null> {
+export async function getCached<T>(date: string, type: string, ttlSeconds?: number): Promise<T | null> {
   try {
     await ensureDbInitialized();
     const cached = await db.analysisCache.findUnique({
@@ -10,12 +11,11 @@ export async function getCached<T>(date: string, type: string): Promise<T | null
     });
     if (!cached) return null;
 
-    // Check if cache is stale (older than TTL)
+    // Check if cache is stale
     const ageMs = Date.now() - cached.createdAt.getTime();
-    const ageMinutes = ageMs / (60 * 1000);
-    if (ageMinutes > CACHE_TTL_MINUTES) {
-      // Stale — return null so caller fetches fresh
-      return null;
+    const ttlMs = (ttlSeconds ? ttlSeconds * 1000 : CACHE_TTL_MINUTES * 60 * 1000);
+    if (ageMs > ttlMs) {
+      return null; // Stale — return null so caller fetches fresh
     }
 
     try {

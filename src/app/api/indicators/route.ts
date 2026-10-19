@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     const cached = await getCached<{
       indicators: Awaited<ReturnType<typeof fetchMarketIndicators>>;
       generatedAt: string;
-    }>(hourKey, cacheKey);
+    }>(hourKey, cacheKey, 10); // 10-second TTL for real-time prices
     if (cached) {
       return noCacheJson({ ...cached, cached: true });
     }

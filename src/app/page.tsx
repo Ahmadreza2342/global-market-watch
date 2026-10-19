@@ -136,6 +136,15 @@ function Dashboard() {
     return () => clearTimeout(t);
   }, [fetchBrief, fetchIndicators, fetchCalendar, fetchTraders, fetchMultiTf, fetchSignals]);
 
+  // Auto-refresh indicators + multi-tf signals every 10 seconds (real-time prices)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchIndicators();
+      fetchMultiTf();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [fetchIndicators, fetchMultiTf]);
+
   const scrollToContent = () => sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   return (
