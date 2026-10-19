@@ -1,23 +1,26 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { fetchDailyNews, generateDailyBrief } from "@/lib/market";
-import { getCached, setCached, todayKey } from "@/lib/cache";
+import { getCached, setCached, hourlyKey } from "@/lib/cache";
+import { noCacheJson } from "@/lib/api-helpers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
   const force = req.nextUrl.searchParams.get("force") === "1";
-  const date = todayKey();
   const cacheKey = "daily_brief";
+  // Hourly cache: news changes ~hourly; also depends on time of day
+  const hourKey = hourlyKey();
 
   if (!force) {
     const cached = await getCached<{
       brief: Awaited<ReturnType<typeof generateDailyBrief>>;
       news: Awaited<ReturnType<typeof fetchDailyNews>>;
       generatedAt: string;
-    }>(date, cacheKey);
+    }>(hourKey, cacheKey);
     if (cached) {
-      return NextResponse.json({ ...cached, cached: true });
+      return noCacheJson({ ...cached, cached: true });
     }
   }
 
@@ -29,13 +32,13 @@ export async function GET(req: NextRequest) {
       news,
       generatedAt: new Date().toISOString(),
     };
-    await setCached(date, cacheKey, payload);
-    return NextResponse.json({ ...payload, cached: false });
+    await setCached(hourKey, cacheKey, payload);
+    return noCacheJson({ ...payload, cached: false });
   } catch (err) {
     console.error("[/api/daily-brief] error:", err);
-    return NextResponse.json(
+    return noCacheJson(
       { error: "Failed to generate daily brief", detail: String(err) },
-      { status: 500 }
+      500
     );
   }
 }

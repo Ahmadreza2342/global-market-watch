@@ -1,25 +1,27 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { fetchTopTraders, generateMultiTfSignals, type MultiTfSignal } from "@/lib/mt5";
-import { getCached, setCached, todayKey } from "@/lib/cache";
+import { getCached, setCached, hourlyKey } from "@/lib/cache";
 import { db, ensureDbInitialized } from "@/lib/db";
+import { noCacheJson } from "@/lib/api-helpers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
   const force = req.nextUrl.searchParams.get("force") === "1";
-  const hourKey = `${todayKey()}-${new Date().getHours()}`;
   const cacheKey = "multi_tf_signals";
+  const hourKey = `${hourlyKey()}-${Math.floor(new Date().getMinutes() / 15)}`; // 15-min cache key
 
   if (!force) {
     const cached = await getCached<{ signals: MultiTfSignal[]; generatedAt: string }>(hourKey, cacheKey);
-    if (cached) return NextResponse.json({ ...cached, cached: true });
+    if (cached) return noCacheJson({ ...cached, cached: true });
   }
 
   try {
     await ensureDbInitialized();
     // Get traders (cached)
-    const traderCache = await getCached<{ traders: Awaited<ReturnType<typeof fetchTopTraders>> }>(todayKey(), "traders");
+    const traderCache = await getCached<{ traders: Awaited<ReturnType<typeof fetchTopTraders>> }>(hourlyKey(), "traders");
     let traders = traderCache?.traders;
     if (!traders) traders = await fetchTopTraders();
 
@@ -46,9 +48,9 @@ export async function GET(req: NextRequest) {
 
     const payload = { signals, generatedAt: new Date().toISOString() };
     await setCached(hourKey, cacheKey, payload);
-    return NextResponse.json({ ...payload, cached: false });
+    return noCacheJson({ ...payload, cached: false });
   } catch (err) {
     console.error("[/api/multi-tf-signals] error:", err);
-    return NextResponse.json({ error: "Failed to generate signals", detail: String(err) }, { status: 500 });
+    return noCacheJson({ error: "Failed to generate signals", detail: String(err) }, 500);
   }
 }
