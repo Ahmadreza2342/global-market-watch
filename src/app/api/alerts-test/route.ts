@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { db, ensureDbInitialized } from "@/lib/db";
+import { noCacheJson } from "@/lib/api-helpers";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-// Endpoint for testing notifications - creates a fake strong alert
+// Endpoint for testing notifications — creates a fake strong alert
+// (no user authentication required, just a test endpoint)
 export async function POST() {
   try {
     await ensureDbInitialized();
@@ -20,9 +24,9 @@ export async function POST() {
         reason: "TEST ALERT — strong composite signal (RSI oversold + bullish MACD cross + positive news bias + top traders aligned).",
       },
     });
-    return NextResponse.json({ ok: true, item }, { status: 201 });
+    return noCacheJson({ ok: true, item }, 201);
   } catch (err) {
     console.error("[/api/alerts-test] error:", err);
-    return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
+    return noCacheJson({ ok: false, error: String(err) }, 500);
   }
 }
